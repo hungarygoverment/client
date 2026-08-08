@@ -401,7 +401,10 @@ end)
 local function getClosestHeadToCursor()
     local mousePos = UIS:GetMouseLocation()
     local closestPlayer = nil
-    local closestDist = math.huge
+    local bestScore = math.huge
+
+    local root = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return nil end
 
     for _,player in ipairs(Players:GetPlayers()) do
         if player ~= lp and player.Character and player.Character:FindFirstChild("Head") then
@@ -409,9 +412,18 @@ local function getClosestHeadToCursor()
             local screenPos, onScreen = camera:WorldToViewportPoint(head.Position)
 
             if onScreen then
-                local dist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-                if dist < closestDist then
-                    closestDist = dist
+                -- 2D cursor distance
+                local cursorDist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+
+                -- 3D world distance (distance from YOU)
+                local worldDist = (root.Position - head.Position).Magnitude
+
+                -- Combined score
+                -- Lower score = better target
+                local score = cursorDist + (worldDist * 0.25)
+
+                if score < bestScore then
+                    bestScore = score
                     closestPlayer = player
                 end
             end
