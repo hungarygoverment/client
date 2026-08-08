@@ -10,7 +10,6 @@ local highlights = {}
 local enabled = false
 local speedValue = 16
 
--- HOTKEYS (default)
 local flyKey = Enum.KeyCode.F
 local aimToggleKey = Enum.KeyCode.G
 
@@ -18,7 +17,7 @@ local flying = false
 local flySpeed = 60
 local aimEnabled = false
 local aiming = false
-local exited = false -- hard kill flag
+local exited = false
 
 ------------------------------------------------------------
 -- UI CREATION
@@ -45,6 +44,111 @@ local stroke = Instance.new("UIStroke")
 stroke.Color = Color3.fromRGB(60,60,60)
 stroke.Thickness = 1
 stroke.Parent = frame
+
+------------------------------------------------------------
+-- VISIBLE TOP BAR + EXIT BUTTON
+------------------------------------------------------------
+
+local dragBar = Instance.new("Frame")
+dragBar.Size = UDim2.new(1, 0, 0, 30)
+dragBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+dragBar.BorderSizePixel = 0
+dragBar.Parent = frame
+
+local dragBarCorner = Instance.new("UICorner")
+dragBarCorner.CornerRadius = UDim.new(0, 12)
+dragBarCorner.Parent = dragBar
+
+local dragBarStroke = Instance.new("UIStroke")
+dragBarStroke.Color = Color3.fromRGB(80, 80, 80)
+dragBarStroke.Thickness = 1
+dragBarStroke.Parent = dragBar
+
+-- EXIT BUTTON (X)
+local exitBtn = Instance.new("TextButton")
+exitBtn.Size = UDim2.new(0, 30, 0, 30)
+exitBtn.Position = UDim2.new(1, -35, 0, 0)
+exitBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+exitBtn.Text = "X"
+exitBtn.TextColor3 = Color3.fromRGB(255, 80, 80)
+exitBtn.Font = Enum.Font.GothamBold
+exitBtn.TextSize = 20
+exitBtn.BorderSizePixel = 0
+exitBtn.Parent = dragBar
+
+local exitCorner = Instance.new("UICorner")
+exitCorner.CornerRadius = UDim.new(0, 8)
+exitCorner.Parent = exitBtn
+
+exitBtn.MouseEnter:Connect(function()
+    if exited then return end
+    exitBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+end)
+
+exitBtn.MouseLeave:Connect(function()
+    if exited then return end
+    exitBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+end)
+
+exitBtn.MouseButton1Click:Connect(function()
+    if exited then return end
+    exited = true
+
+    enabled = false
+    removeHighlights()
+
+    if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+        lp.Character.Humanoid.WalkSpeed = 16
+    end
+
+    stopFly()
+    aimEnabled = false
+    aiming = false
+
+    gui:Destroy()
+    script:Destroy()
+end)
+
+------------------------------------------------------------
+-- DRAG LOGIC (dragBar only)
+------------------------------------------------------------
+
+local draggingUI = false
+local dragStart
+local startPos
+
+dragBar.InputBegan:Connect(function(input)
+    if exited then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingUI = true
+        dragStart = input.Position
+        startPos = frame.Position
+    end
+end)
+
+dragBar.InputEnded:Connect(function(input)
+    if exited then return end
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingUI = false
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if exited then return end
+    if draggingUI and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+------------------------------------------------------------
+-- BUTTON STYLE FUNCTION
+------------------------------------------------------------
 
 local function styleButton(btn)
     btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
@@ -73,16 +177,20 @@ local function styleButton(btn)
     end)
 end
 
+------------------------------------------------------------
+-- BUTTONS
+------------------------------------------------------------
+
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(0,220,0,32)
-toggleBtn.Position = UDim2.new(0,10,0,10)
+toggleBtn.Position = UDim2.new(0,10,0,40)
 toggleBtn.Text = "Highlight: OFF"
 toggleBtn.Parent = frame
 styleButton(toggleBtn)
 
 local deleteBtn = Instance.new("TextButton")
 deleteBtn.Size = UDim2.new(0,220,0,32)
-deleteBtn.Position = UDim2.new(0,10,0,50)
+deleteBtn.Position = UDim2.new(0,10,0,80)
 deleteBtn.Text = "DELETE ALL / EXIT"
 deleteBtn.Parent = frame
 styleButton(deleteBtn)
@@ -93,7 +201,7 @@ styleButton(deleteBtn)
 
 local flyKeyLabel = Instance.new("TextLabel")
 flyKeyLabel.Size = UDim2.new(0,220,0,20)
-flyKeyLabel.Position = UDim2.new(0,10,0,90)
+flyKeyLabel.Position = UDim2.new(0,10,0,120)
 flyKeyLabel.Text = "Fly Key: F"
 flyKeyLabel.BackgroundTransparency = 1
 flyKeyLabel.TextColor3 = Color3.fromRGB(200,200,200)
@@ -104,14 +212,14 @@ flyKeyLabel.Parent = frame
 
 local flyKeyBtn = Instance.new("TextButton")
 flyKeyBtn.Size = UDim2.new(0,220,0,28)
-flyKeyBtn.Position = UDim2.new(0,10,0,115)
+flyKeyBtn.Position = UDim2.new(0,10,0,145)
 flyKeyBtn.Text = "Set Fly Key"
 flyKeyBtn.Parent = frame
 styleButton(flyKeyBtn)
 
 local aimKeyLabel = Instance.new("TextLabel")
 aimKeyLabel.Size = UDim2.new(0,220,0,20)
-aimKeyLabel.Position = UDim2.new(0,10,0,150)
+aimKeyLabel.Position = UDim2.new(0,10,0,180)
 aimKeyLabel.Text = "Aim Toggle Key: G"
 aimKeyLabel.BackgroundTransparency = 1
 aimKeyLabel.TextColor3 = Color3.fromRGB(200,200,200)
@@ -122,7 +230,7 @@ aimKeyLabel.Parent = frame
 
 local aimKeyBtn = Instance.new("TextButton")
 aimKeyBtn.Size = UDim2.new(0,220,0,28)
-aimKeyBtn.Position = UDim2.new(0,10,0,175)
+aimKeyBtn.Position = UDim2.new(0,10,0,205)
 aimKeyBtn.Text = "Set Aim Key"
 aimKeyBtn.Parent = frame
 styleButton(aimKeyBtn)
@@ -133,7 +241,7 @@ styleButton(aimKeyBtn)
 
 local speedLabel = Instance.new("TextLabel")
 speedLabel.Size = UDim2.new(0,220,0,20)
-speedLabel.Position = UDim2.new(0,10,0,210)
+speedLabel.Position = UDim2.new(0,10,0,240)
 speedLabel.Text = "Speed: 16"
 speedLabel.BackgroundTransparency = 1
 speedLabel.TextColor3 = Color3.fromRGB(200,200,200)
@@ -144,7 +252,7 @@ speedLabel.Parent = frame
 
 local speedSlider = Instance.new("Frame")
 speedSlider.Size = UDim2.new(0,220,0,10)
-speedSlider.Position = UDim2.new(0,10,0,235)
+speedSlider.Position = UDim2.new(0,10,0,265)
 speedSlider.BackgroundColor3 = Color3.fromRGB(40,40,40)
 speedSlider.BorderSizePixel = 0
 speedSlider.Parent = frame
@@ -164,52 +272,7 @@ sliderFillCorner.CornerRadius = UDim.new(0,6)
 sliderFillCorner.Parent = sliderFill
 
 ------------------------------------------------------------
--- PERFECT DRAGGABLE UI
-------------------------------------------------------------
-
-local draggingUI = false
-local dragStart
-local startPos
-
-local function isInsideNonDraggable(target)
-    return speedSlider:IsAncestorOf(target)
-        or flyKeyBtn:IsAncestorOf(target)
-        or aimKeyBtn:IsAncestorOf(target)
-end
-
-frame.InputBegan:Connect(function(input)
-    if exited then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        if not isInsideNonDraggable(input.Target) then
-            draggingUI = true
-            dragStart = input.Position
-            startPos = frame.Position
-        end
-    end
-end)
-
-frame.InputEnded:Connect(function(input)
-    if exited then return end
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingUI = false
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if exited then return end
-    if draggingUI and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
-------------------------------------------------------------
--- SPEED SLIDER
+-- SLIDER DRAGGING
 ------------------------------------------------------------
 
 local draggingSlider = false
@@ -328,7 +391,6 @@ end)
 
 local function stopFly()
     flying = false
-    -- remove any BodyVelocity if still there
     if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
         for _,obj in ipairs(lp.Character.HumanoidRootPart:GetChildren()) do
             if obj:IsA("BodyVelocity") then
@@ -378,7 +440,7 @@ UIS.InputBegan:Connect(function(input)
 end)
 
 ------------------------------------------------------------
--- AIM ASSIST (HEAD AIM + SAFE TOGGLE)
+-- AIM ASSIST
 ------------------------------------------------------------
 
 local function getClosestHeadToCursor()
@@ -415,7 +477,6 @@ RS.RenderStepped:Connect(function()
     end
 end)
 
--- Toggle aim mode
 UIS.InputBegan:Connect(function(input)
     if exited then return end
     if input.KeyCode == aimToggleKey then
@@ -427,7 +488,6 @@ UIS.InputBegan:Connect(function(input)
     end
 end)
 
--- Right-click aim only when aimEnabled
 UIS.InputBegan:Connect(function(input)
     if exited then return end
     if input.UserInputType == Enum.UserInputType.MouseButton2 and aimEnabled then
