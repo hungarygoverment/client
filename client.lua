@@ -62,7 +62,7 @@ gui.Parent = lp:WaitForChild("PlayerGui", 5)
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 340, 0, 700)
-frame.Position = UDim2.new(0.5, -170, 0.5, -350)
+frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 frame.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
 frame.BorderSizePixel = 0
 frame.AnchorPoint = Vector2.new(0.5, 0.5)
