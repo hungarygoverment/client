@@ -344,10 +344,34 @@ end)
 -- FLY SYSTEM
 ------------------------------------------------------------
 
+local function noclipOn()
+    local char = lp.Character
+    if not char then return end
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = false
+        end
+    end
+end
+
+local function noclipOff()
+    local char = lp.Character
+    if not char then return end
+    for _, part in ipairs(char:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = true
+        end
+    end
+end
+
+
 local function stopFly()
     flying = false
-    if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-        for _,obj in ipairs(lp.Character.HumanoidRootPart:GetChildren()) do
+    noclipOff()
+
+    local char = lp.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        for _, obj in ipairs(char.HumanoidRootPart:GetChildren()) do
             if obj:IsA("BodyVelocity") then
                 obj:Destroy()
             end
@@ -355,8 +379,10 @@ local function stopFly()
     end
 end
 
+
 local function startFly()
     flying = true
+    noclipOn()
 
     local char = lp.Character
     if not char then return end
@@ -366,11 +392,18 @@ local function startFly()
 
     local bv = Instance.new("BodyVelocity")
     bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-    bv.Velocity = Vector3.new(0,0,0)
+    bv.Velocity = Vector3.zero
     bv.Parent = root
 
     while flying and not exited do
         task.wait()
+
+        -- keep noclip active (some games re-enable collisions)
+        for _, part in ipairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
 
         local move = Vector3.zero
 
@@ -387,12 +420,14 @@ local function startFly()
     bv:Destroy()
 end
 
+
 UIS.InputBegan:Connect(function(input)
     if exited then return end
     if input.KeyCode == flyKey then
         if flying then stopFly() else startFly() end
     end
 end)
+
 
 ------------------------------------------------------------
 -- AIM ASSIST
