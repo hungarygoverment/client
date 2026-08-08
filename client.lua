@@ -248,6 +248,29 @@ runKeyBtn.Parent = frame
 styleButton(runKeyBtn)
 
 ------------------------------------------------------------
+-- RUN MODE SWITCH (Hold / Toggle)
+------------------------------------------------------------
+
+local runMode = "Hold"  -- default
+local runModeBtn = Instance.new("TextButton")
+runModeBtn.Size = UDim2.new(0,220,0,28)
+runModeBtn.Position = UDim2.new(0,10,0,290)
+runModeBtn.Text = "Run Mode: HOLD"
+runModeBtn.Parent = frame
+styleButton(runModeBtn)
+
+runModeBtn.MouseButton1Click:Connect(function()
+    if exited then return end
+    if runMode == "Hold" then
+        runMode = "Toggle"
+        runModeBtn.Text = "Run Mode: TOGGLE"
+    else
+        runMode = "Hold"
+        runModeBtn.Text = "Run Mode: HOLD"
+    end
+end)
+
+------------------------------------------------------------
 -- RUN SPEED SLIDER
 ------------------------------------------------------------
 
@@ -370,18 +393,22 @@ runKeyBtn.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
--- RUN HOTKEY BEHAVIOR
+-- RUN HOTKEY BEHAVIOR (Hold / Toggle)
 ------------------------------------------------------------
 
 UIS.InputBegan:Connect(function(input)
     if exited then return end
 
-    -- RUN START
     if input.KeyCode == runKey then
-        running = true
         local hum = lp.Character and lp.Character:FindFirstChild("Humanoid")
-        if hum then
+        if not hum then return end
+
+        if runMode == "Hold" then
+            running = true
             hum.WalkSpeed = speedValue
+        else
+            running = not running
+            hum.WalkSpeed = running and speedValue or 16
         end
     end
 end)
@@ -389,16 +416,12 @@ end)
 UIS.InputEnded:Connect(function(input)
     if exited then return end
 
-    -- RUN STOP
-    if input.KeyCode == runKey then
+    if input.KeyCode == runKey and runMode == "Hold" then
         running = false
         local hum = lp.Character and lp.Character:FindFirstChild("Humanoid")
-        if hum then
-            hum.WalkSpeed = 16
-        end
+        if hum then hum.WalkSpeed = 16 end
     end
 end)
-
 
 ------------------------------------------------------------
 -- HIGHLIGHT SYSTEM
