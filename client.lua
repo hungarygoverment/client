@@ -1,17 +1,68 @@
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
+local camera = workspace.CurrentCamera
+
+local highlights = {}
+local enabled = false
+local speedValue = 16
+
+local flyKey = Enum.KeyCode.F
+local aimToggleKey = Enum.KeyCode.G
+local runKey = Enum.KeyCode.LeftControl
+
+local flying = false
+local flySpeed = 60
+local aimEnabled = false
+local aiming = false
+local exited = false
+
+local aimTarget = "Head"
+local runMode = "Hold"
+
 ------------------------------------------------------------
--- APPLE-LIKE UI (Cards + Sections + Perfect Spacing)
+-- FUNCTIONS MUST BE DEFINED BEFORE UI
+------------------------------------------------------------
+
+local function addHighlight(player)
+    if not enabled or exited then return end
+    if player == lp then return end
+    if not player.Character then return end
+
+    if highlights[player] then
+        highlights[player]:Destroy()
+    end
+
+    local h = Instance.new("Highlight")
+    h.FillColor = Color3.fromRGB(255,0,0)
+    h.FillTransparency = 0.5
+    h.Adornee = player.Character
+    h.Parent = player.Character
+
+    highlights[player] = h
+end
+
+local function removeHighlights()
+    for player, h in pairs(highlights) do
+        if h then h:Destroy() end
+        highlights[player] = nil
+    end
+end
+
+------------------------------------------------------------
+-- APPLE UI
 ------------------------------------------------------------
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "HL_UI"
 gui.IgnoreGuiInset = true
 gui.ResetOnSpawn = false
-gui.Parent = lp:WaitForChild("PlayerGui")
+gui.Parent = lp:WaitForChild("PlayerGui", 5)
 
--- Main container (Apple card style)
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 340, 0, 560)
-frame.Position = UDim2.new(0.5, -170, 0.5, -280)
+frame.Size = UDim2.new(0, 340, 0, 700)
+frame.Position = UDim2.new(0.5, -170, 0.5, -350)
 frame.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
 frame.BorderSizePixel = 0
 frame.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -28,21 +79,15 @@ frameStroke.Thickness = 1
 frameStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 frameStroke.Parent = frame
 
--- Smooth fade + slide
 task.spawn(function()
     for i = 1, 15 do
         frame.BackgroundTransparency = 1 - (i / 15)
         task.wait(0.02)
     end
-    local startPos = frame.Position
-    for i = 1, 12 do
-        frame.Position = startPos + UDim2.new(0, 0, 0, -12 + i)
-        task.wait(0.02)
-    end
 end)
 
 ------------------------------------------------------------
--- DRAG BAR (Apple-style title bar)
+-- DRAG BAR
 ------------------------------------------------------------
 
 local dragBar = Instance.new("Frame")
@@ -68,11 +113,6 @@ Title.Text = "laszi’s Control Center"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 Title.Font = Enum.Font.GothamBold
 Title.TextScaled = true
-Title.TextStrokeTransparency = 0.6
-
-------------------------------------------------------------
--- DRAG LOGIC
-------------------------------------------------------------
 
 local draggingUI = false
 local dragStart
@@ -108,13 +148,13 @@ UIS.InputChanged:Connect(function(input)
 end)
 
 ------------------------------------------------------------
--- SECTION CREATOR (Apple-style cards)
+-- SECTION CREATOR
 ------------------------------------------------------------
 
-local function createSection(titleText, order)
+local function createSection(titleText, order, height)
     local section = Instance.new("Frame")
-    section.Size = UDim2.new(1, -30, 0, 130)
-    section.Position = UDim2.new(0, 15, 0, 70 + (order * 140))
+    section.Size = UDim2.new(1, -30, 0, height)
+    section.Position = UDim2.new(0, 15, 0, 70 + (order * (height + 10)))
     section.BackgroundColor3 = Color3.fromRGB(32, 32, 32)
     section.BorderSizePixel = 0
     section.Parent = frame
@@ -143,16 +183,16 @@ local function createSection(titleText, order)
 end
 
 ------------------------------------------------------------
--- SECTIONS (Apple-style grouping)
+-- SECTIONS
 ------------------------------------------------------------
 
-local secVisual = createSection("Visuals", 0)
-local secFly    = createSection("Fly System", 1)
-local secAim    = createSection("Aim Assist", 2)
-local secRun    = createSection("Run System", 3)
+local secVisual = createSection("Visuals", 0, 130)
+local secFly    = createSection("Fly System", 1, 130)
+local secAim    = createSection("Aim Assist", 2, 160)
+local secRun    = createSection("Run System", 3, 210)
 
 ------------------------------------------------------------
--- BUTTON CREATOR (Apple-style)
+-- BUTTON CREATOR
 ------------------------------------------------------------
 
 local function createButton(parent, text, y)
@@ -190,14 +230,14 @@ local function createButton(parent, text, y)
 end
 
 ------------------------------------------------------------
--- VISUALS SECTION (Highlight + Delete)
+-- VISUALS SECTION
 ------------------------------------------------------------
 
 local highlightBtn = createButton(secVisual, "Highlight: OFF", 45)
 local deleteBtn    = createButton(secVisual, "DELETE ALL / EXIT", 85)
 
 ------------------------------------------------------------
--- FLY SECTION (Fly Key)
+-- FLY SECTION
 ------------------------------------------------------------
 
 local flyKeyLabel = Instance.new("TextLabel")
@@ -214,7 +254,7 @@ flyKeyLabel.Parent = secFly
 local flyKeyBtn = createButton(secFly, "Set Fly Key", 75)
 
 ------------------------------------------------------------
--- AIM SECTION (Aim Key + Aim Target)
+-- AIM SECTION
 ------------------------------------------------------------
 
 local aimKeyLabel = Instance.new("TextLabel")
@@ -229,11 +269,10 @@ aimKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
 aimKeyLabel.Parent = secAim
 
 local aimKeyBtn = createButton(secAim, "Set Aim Key", 75)
-
 local aimTargetBtn = createButton(secAim, "Aim Target: HEAD", 115)
 
 ------------------------------------------------------------
--- RUN SECTION (Run Key + Mode + Slider)
+-- RUN SECTION
 ------------------------------------------------------------
 
 local runKeyLabel = Instance.new("TextLabel")
@@ -248,10 +287,8 @@ runKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
 runKeyLabel.Parent = secRun
 
 local runKeyBtn = createButton(secRun, "Set Run Key", 75)
-
 local runModeBtn = createButton(secRun, "Run Mode: HOLD", 115)
 
--- Slider label
 local speedLabel = Instance.new("TextLabel")
 speedLabel.Size = UDim2.new(1, -20, 0, 20)
 speedLabel.Position = UDim2.new(0, 10, 0, 155)
@@ -263,7 +300,6 @@ speedLabel.TextSize = 14
 speedLabel.TextXAlignment = Enum.TextXAlignment.Left
 speedLabel.Parent = secRun
 
--- Slider background
 local speedSlider = Instance.new("Frame")
 speedSlider.Size = UDim2.new(1, -20, 0, 12)
 speedSlider.Position = UDim2.new(0, 10, 0, 180)
@@ -275,7 +311,6 @@ local sliderCorner = Instance.new("UICorner")
 sliderCorner.CornerRadius = UDim.new(0, 6)
 sliderCorner.Parent = speedSlider
 
--- Slider fill
 local sliderFill = Instance.new("Frame")
 sliderFill.Size = UDim2.new(speedValue/100, 0, 1, 0)
 sliderFill.BackgroundColor3 = Color3.fromRGB(0,120,255)
@@ -287,20 +322,17 @@ sliderFillCorner.CornerRadius = UDim.new(0, 6)
 sliderFillCorner.Parent = sliderFill
 
 ------------------------------------------------------------
--- BUTTON LOGIC (Highlight + Delete)
+-- BUTTON LOGIC
 ------------------------------------------------------------
 
 highlightBtn.MouseButton1Click:Connect(function()
     if exited then return end
     enabled = not enabled
-
     highlightBtn.Text = enabled and "Highlight: ON" or "Highlight: OFF"
 
     if enabled then
         for _,player in ipairs(Players:GetPlayers()) do
-            if player ~= lp then
-                addHighlight(player)
-            end
+            if player ~= lp then addHighlight(player) end
         end
     else
         removeHighlights()
@@ -329,35 +361,6 @@ deleteBtn.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
--- HIGHLIGHT SYSTEM
-------------------------------------------------------------
-
-local function addHighlight(player)
-    if not enabled or exited then return end
-    if player == lp then return end
-    if not player.Character then return end
-
-    if highlights[player] then
-        highlights[player]:Destroy()
-    end
-
-    local h = Instance.new("Highlight")
-    h.FillColor = Color3.fromRGB(255,0,0)
-    h.FillTransparency = 0.5
-    h.Adornee = player.Character
-    h.Parent = player.Character
-
-    highlights[player] = h
-end
-
-local function removeHighlights()
-    for player, h in pairs(highlights) do
-        if h then h:Destroy() end
-        highlights[player] = nil
-    end
-end
-
-------------------------------------------------------------
 -- FLY SYSTEM
 ------------------------------------------------------------
 
@@ -365,9 +368,7 @@ local function noclipOn()
     local char = lp.Character
     if not char then return end
     for _, part in ipairs(char:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = false
-        end
+        if part:IsA("BasePart") then part.CanCollide = false end
     end
 end
 
@@ -375,9 +376,7 @@ local function noclipOff()
     local char = lp.Character
     if not char then return end
     for _, part in ipairs(char:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.CanCollide = true
-        end
+        if part:IsA("BasePart") then part.CanCollide = true end
     end
 end
 
@@ -388,9 +387,7 @@ local function stopFly()
     local char = lp.Character
     if char and char:FindFirstChild("HumanoidRootPart") then
         for _, obj in ipairs(char.HumanoidRootPart:GetChildren()) do
-            if obj:IsA("BodyVelocity") then
-                obj:Destroy()
-            end
+            if obj:IsA("BodyVelocity") then obj:Destroy() end
         end
     end
 end
@@ -414,9 +411,7 @@ local function startFly()
         task.wait()
 
         for _, part in ipairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
+            if part:IsA("BasePart") then part.CanCollide = false end
         end
 
         local move = Vector3.zero
@@ -456,7 +451,7 @@ UIS.InputBegan:Connect(function(input)
 end)
 
 ------------------------------------------------------------
--- AIM ASSIST (Head / Torso)
+-- AIM ASSIST
 ------------------------------------------------------------
 
 aimKeyBtn.MouseButton1Click:Connect(function()
@@ -484,6 +479,10 @@ aimTargetBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+------------------------------------------------------------
+-- AIM ASSIST (Head / Torso)
+------------------------------------------------------------
+
 local function getClosestTargetToCursor()
     local mousePos = UIS:GetMouseLocation()
     local closestPlayer = nil
@@ -492,6 +491,7 @@ local function getClosestTargetToCursor()
     local root = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
     if not root then return nil end
 
+    -- choose part based on aimTarget mode
     local partName = aimTarget == "Head" and "Head" or "HumanoidRootPart"
 
     for _, player in ipairs(Players:GetPlayers()) do
@@ -501,8 +501,13 @@ local function getClosestTargetToCursor()
             local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
 
             if onScreen then
+                -- 2D cursor distance
                 local cursorDist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+
+                -- 3D world distance
                 local worldDist = (root.Position - part.Position).Magnitude
+
+                -- weighted score
                 local score = cursorDist + (worldDist * 0.25)
 
                 if score < bestScore then
