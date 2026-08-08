@@ -20,7 +20,7 @@ local aiming = false
 local exited = false
 
 ------------------------------------------------------------
--- UI CREATION
+-- UI CREATION (centered + smooth animation)
 ------------------------------------------------------------
 
 local gui = Instance.new("ScreenGui")
@@ -31,10 +31,12 @@ gui.Parent = lp:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0,240,0,330)
-frame.Position = UDim2.new(0,20,0,20)
+frame.Position = UDim2.new(0.5, -120, 0.5, -165) -- centered
 frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 frame.BorderSizePixel = 0
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
 frame.Parent = gui
+frame.BackgroundTransparency = 1 -- start invisible
 
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0,12)
@@ -46,7 +48,26 @@ stroke.Thickness = 1
 stroke.Parent = frame
 
 ------------------------------------------------------------
--- VISIBLE TOP BAR + EXIT BUTTON
+-- SMOOTH LOAD-IN ANIMATION
+------------------------------------------------------------
+
+task.spawn(function()
+    -- fade in
+    for i = 1, 15 do
+        frame.BackgroundTransparency = 1 - (i / 15)
+        task.wait(0.02)
+    end
+
+    -- slide up slightly
+    local startPos = frame.Position
+    for i = 1, 12 do
+        frame.Position = startPos + UDim2.new(0, 0, 0, -12 + i)
+        task.wait(0.02)
+    end
+end)
+
+------------------------------------------------------------
+-- DRAG BAR + TITLE
 ------------------------------------------------------------
 
 local dragBar = Instance.new("Frame")
@@ -63,6 +84,17 @@ local dragBarStroke = Instance.new("UIStroke")
 dragBarStroke.Color = Color3.fromRGB(80, 80, 80)
 dragBarStroke.Thickness = 1
 dragBarStroke.Parent = dragBar
+
+local Title = Instance.new("TextLabel")
+Title.Parent = dragBar
+Title.Size = UDim2.new(1, 0, 1, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "laszi's"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.Font = Enum.Font.GothamBold
+Title.TextScaled = true
+Title.TextStrokeTransparency = 0.4
+
 
 ------------------------------------------------------------
 -- DRAG LOGIC (dragBar only)
@@ -191,13 +223,38 @@ aimKeyBtn.Parent = frame
 styleButton(aimKeyBtn)
 
 ------------------------------------------------------------
--- SPEED SLIDER
+-- RUN KEY UI
+------------------------------------------------------------
+
+local runKey = Enum.KeyCode.LeftControl
+local running = false
+
+local runKeyLabel = Instance.new("TextLabel")
+runKeyLabel.Size = UDim2.new(0,220,0,20)
+runKeyLabel.Position = UDim2.new(0,10,0,235)
+runKeyLabel.Text = "Run Key: LeftControl"
+runKeyLabel.BackgroundTransparency = 1
+runKeyLabel.TextColor3 = Color3.fromRGB(200,200,200)
+runKeyLabel.Font = Enum.Font.Gotham
+runKeyLabel.TextSize = 14
+runKeyLabel.TextXAlignment = Enum.TextXAlignment.Left
+runKeyLabel.Parent = frame
+
+local runKeyBtn = Instance.new("TextButton")
+runKeyBtn.Size = UDim2.new(0,220,0,28)
+runKeyBtn.Position = UDim2.new(0,10,0,260)
+runKeyBtn.Text = "Set Run Key"
+runKeyBtn.Parent = frame
+styleButton(runKeyBtn)
+
+------------------------------------------------------------
+-- RUN SPEED SLIDER
 ------------------------------------------------------------
 
 local speedLabel = Instance.new("TextLabel")
 speedLabel.Size = UDim2.new(0,220,0,20)
-speedLabel.Position = UDim2.new(0,10,0,240)
-speedLabel.Text = "Speed: 16"
+speedLabel.Position = UDim2.new(0,10,0,295)
+speedLabel.Text = "Run Speed: " .. speedValue
 speedLabel.BackgroundTransparency = 1
 speedLabel.TextColor3 = Color3.fromRGB(200,200,200)
 speedLabel.Font = Enum.Font.Gotham
@@ -207,7 +264,7 @@ speedLabel.Parent = frame
 
 local speedSlider = Instance.new("Frame")
 speedSlider.Size = UDim2.new(0,220,0,10)
-speedSlider.Position = UDim2.new(0,10,0,265)
+speedSlider.Position = UDim2.new(0,10,0,320)
 speedSlider.BackgroundColor3 = Color3.fromRGB(40,40,40)
 speedSlider.BorderSizePixel = 0
 speedSlider.Parent = frame
@@ -255,11 +312,13 @@ UIS.InputChanged:Connect(function(input)
         )
 
         sliderFill.Size = UDim2.new(relX,0,1,0)
-        speedValue = math.floor(relX * 100)
-        speedLabel.Text = "Speed: " .. speedValue
 
-        if lp.Character and lp.Character:FindFirstChild("Humanoid") then
-            lp.Character.Humanoid.WalkSpeed = speedValue
+        speedValue = math.floor(relX * 100)
+        speedLabel.Text = "Run Speed: " .. speedValue
+
+        local hum = lp.Character and lp.Character:FindFirstChild("Humanoid")
+        if hum then
+            hum.WalkSpeed = running and speedValue or 16
         end
     end
 end)
@@ -295,6 +354,51 @@ aimKeyBtn.MouseButton1Click:Connect(function()
         end
     end)
 end)
+
+runKeyBtn.MouseButton1Click:Connect(function()
+    if exited then return end
+    runKeyLabel.Text = "Run Key: ..."
+    local conn
+    conn = UIS.InputBegan:Connect(function(input)
+        if exited then conn:Disconnect() return end
+        if input.KeyCode ~= Enum.KeyCode.Unknown then
+            runKey = input.KeyCode
+            runKeyLabel.Text = "Run Key: " .. input.KeyCode.Name
+            conn:Disconnect()
+        end
+    end)
+end)
+
+------------------------------------------------------------
+-- RUN HOTKEY BEHAVIOR
+------------------------------------------------------------
+
+UIS.InputBegan:Connect(function(input)
+    if exited then return end
+
+    -- RUN START
+    if input.KeyCode == runKey then
+        running = true
+        local hum = lp.Character and lp.Character:FindFirstChild("Humanoid")
+        if hum then
+            hum.WalkSpeed = speedValue
+        end
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if exited then return end
+
+    -- RUN STOP
+    if input.KeyCode == runKey then
+        running = false
+        local hum = lp.Character and lp.Character:FindFirstChild("Humanoid")
+        if hum then
+            hum.WalkSpeed = 16
+        end
+    end
+end)
+
 
 ------------------------------------------------------------
 -- HIGHLIGHT SYSTEM
@@ -539,7 +643,6 @@ local function setupPlayer(player)
         task.wait(0.1)
 
         local hum = char:FindFirstChild("Humanoid")
-        if hum then hum.WalkSpeed = speedValue end
 
         if enabled then addHighlight(player) end
     end)
