@@ -30,7 +30,7 @@ gui.ResetOnSpawn = false
 gui.Parent = lp:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0,300,0,750)
+frame.Size = UDim2.new(0,300,0,420)
 frame.Position = UDim2.new(0.5, -120, 0.5, -165) -- centered
 frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 frame.BorderSizePixel = 0
@@ -231,7 +231,7 @@ local running = false
 
 local runKeyLabel = Instance.new("TextLabel")
 runKeyLabel.Size = UDim2.new(0,220,0,20)
-runKeyLabel.Position = UDim2.new(0,10,0,235)
+runKeyLabel.Position = UDim2.new(0,10,0,240)
 runKeyLabel.Text = "Run Key: LeftControl"
 runKeyLabel.BackgroundTransparency = 1
 runKeyLabel.TextColor3 = Color3.fromRGB(200,200,200)
@@ -242,7 +242,7 @@ runKeyLabel.Parent = frame
 
 local runKeyBtn = Instance.new("TextButton")
 runKeyBtn.Size = UDim2.new(0,220,0,28)
-runKeyBtn.Position = UDim2.new(0,10,0,260)
+runKeyBtn.Position   = UDim2.new(0,10,0,265)
 runKeyBtn.Text = "Set Run Key"
 runKeyBtn.Parent = frame
 styleButton(runKeyBtn)
@@ -254,7 +254,7 @@ styleButton(runKeyBtn)
 local runMode = "Hold"  -- default
 local runModeBtn = Instance.new("TextButton")
 runModeBtn.Size = UDim2.new(0,220,0,28)
-runModeBtn.Position = UDim2.new(0,10,0,290)
+runModeBtn.Position  = UDim2.new(0,10,0,300)
 runModeBtn.Text = "Run Mode: HOLD"
 runModeBtn.Parent = frame
 styleButton(runModeBtn)
@@ -276,7 +276,7 @@ end)
 
 local speedLabel = Instance.new("TextLabel")
 speedLabel.Size = UDim2.new(0,220,0,20)
-speedLabel.Position = UDim2.new(0,10,0,295)
+speedLabel.Position  = UDim2.new(0,10,0,335)
 speedLabel.Text = "Run Speed: " .. speedValue
 speedLabel.BackgroundTransparency = 1
 speedLabel.TextColor3 = Color3.fromRGB(200,200,200)
@@ -287,7 +287,7 @@ speedLabel.Parent = frame
 
 local speedSlider = Instance.new("Frame")
 speedSlider.Size = UDim2.new(0,220,0,10)
-speedSlider.Position = UDim2.new(0,10,0,320)
+speedSlider.Position = UDim2.new(0,10,0,360)
 speedSlider.BackgroundColor3 = Color3.fromRGB(40,40,40)
 speedSlider.BorderSizePixel = 0
 speedSlider.Parent = frame
