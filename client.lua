@@ -271,6 +271,30 @@ runModeBtn.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
+-- AIM TARGET MODE (Head / Torso)
+------------------------------------------------------------
+
+local aimTarget = "Head" -- default
+
+local aimTargetBtn = Instance.new("TextButton")
+aimTargetBtn.Size = UDim2.new(0,220,0,28)
+aimTargetBtn.Position = UDim2.new(0,10,0,235)
+aimTargetBtn.Text = "Aim Target: HEAD"
+aimTargetBtn.Parent = frame
+styleButton(aimTargetBtn)
+
+aimTargetBtn.MouseButton1Click:Connect(function()
+    if exited then return end
+    if aimTarget == "Head" then
+        aimTarget = "Torso"
+        aimTargetBtn.Text = "Aim Target: TORSO"
+    else
+        aimTarget = "Head"
+        aimTargetBtn.Text = "Aim Target: HEAD"
+    end
+end)
+
+------------------------------------------------------------
 -- RUN SPEED SLIDER
 ------------------------------------------------------------
 
@@ -557,10 +581,10 @@ end)
 
 
 ------------------------------------------------------------
--- AIM ASSIST
+-- AIM ASSIST (Head / Torso switchable)
 ------------------------------------------------------------
 
-local function getClosestHeadToCursor()
+local function getClosestTargetToCursor()
     local mousePos = UIS:GetMouseLocation()
     local closestPlayer = nil
     local bestScore = math.huge
@@ -568,20 +592,23 @@ local function getClosestHeadToCursor()
     local root = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart")
     if not root then return nil end
 
-    for _,player in ipairs(Players:GetPlayers()) do
-        if player ~= lp and player.Character and player.Character:FindFirstChild("Head") then
-            local head = player.Character.Head
-            local screenPos, onScreen = camera:WorldToViewportPoint(head.Position)
+    -- choose part name based on mode
+    local partName = aimTarget == "Head" and "Head" or "HumanoidRootPart"
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= lp and player.Character and player.Character:FindFirstChild(partName) then
+
+            local part = player.Character[partName]
+            local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
 
             if onScreen then
                 -- 2D cursor distance
                 local cursorDist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
 
-                -- 3D world distance (distance from YOU)
-                local worldDist = (root.Position - head.Position).Magnitude
+                -- 3D world distance
+                local worldDist = (root.Position - part.Position).Magnitude
 
-                -- Combined score
-                -- Lower score = better target
+                -- weighted score
                 local score = cursorDist + (worldDist * 0.25)
 
                 if score < bestScore then
@@ -598,10 +625,15 @@ end
 RS.RenderStepped:Connect(function()
     if exited then return end
     if aiming and aimEnabled then
-        local target = getClosestHeadToCursor()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            local head = target.Character.Head
-            camera.CFrame = CFrame.new(camera.CFrame.Position, head.Position)
+        local target = getClosestTargetToCursor()
+        if target and target.Character then
+
+            local partName = aimTarget == "Head" and "Head" or "HumanoidRootPart"
+            local part = target.Character:FindFirstChild(partName)
+
+            if part then
+                camera.CFrame = CFrame.new(camera.CFrame.Position, part.Position)
+            end
         end
     end
 end)
