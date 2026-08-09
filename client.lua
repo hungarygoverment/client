@@ -37,6 +37,10 @@ local running = false
 local exited = false
 local minimized = false
 
+-- INDEPENDENT POSITIONS
+local savedMenuPos = UDim2.fromScale(0.5, 0.5)      -- Default center for full menu
+local savedSquirclePos = UDim2.new(1, -50, 0, 50)  -- Default top-right for squircle
+
 ------------------------------------------------------------
 -- GUI CREATION
 ------------------------------------------------------------
@@ -50,7 +54,7 @@ gui.Parent = playerGui
 local main = Instance.new("Frame")
 main.Name = "Main"
 main.Size = UDim2.fromOffset(330, 500)
-main.Position = UDim2.fromScale(0.5, 0.5)
+main.Position = savedMenuPos
 main.AnchorPoint = Vector2.new(0.5, 0.5)
 main.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 main.BorderSizePixel = 0
@@ -149,11 +153,47 @@ minBtn.MouseLeave:Connect(function()
 end)
 
 ------------------------------------------------------------
+-- PINNED EXIT BUTTON (ALWAYS VISIBLE FOOTER)
+------------------------------------------------------------
+
+local exitButton = Instance.new("TextButton")
+exitButton.Name = "ExitButton"
+exitButton.Size = UDim2.new(1, -20, 0, 36)
+exitButton.Position = UDim2.new(0, 10, 1, -46)
+exitButton.BackgroundColor3 = Color3.fromRGB(55, 28, 32)
+exitButton.Text = "DELETE UI / EXIT"
+exitButton.TextColor3 = Color3.fromRGB(225, 225, 230)
+exitButton.Font = Enum.Font.GothamSemibold
+exitButton.TextSize = 12
+exitButton.AutoButtonColor = false
+exitButton.BorderSizePixel = 0
+exitButton.Parent = main
+
+local exitCorner = Instance.new("UICorner")
+exitCorner.CornerRadius = UDim.new(0, 8)
+exitCorner.Parent = exitButton
+
+local exitStroke = Instance.new("UIStroke")
+exitStroke.Color = Color3.fromRGB(80, 40, 45)
+exitStroke.Thickness = 1
+exitStroke.Parent = exitButton
+
+exitButton.MouseEnter:Connect(function()
+	if exited or minimized then return end
+	exitButton.BackgroundColor3 = Color3.fromRGB(75, 35, 40)
+end)
+
+exitButton.MouseLeave:Connect(function()
+	if exited or minimized then return end
+	exitButton.BackgroundColor3 = Color3.fromRGB(55, 28, 32)
+end)
+
+------------------------------------------------------------
 -- SCROLL AREA & HELPERS
 ------------------------------------------------------------
 
 local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, -20, 1, -67)
+scroll.Size = UDim2.new(1, -20, 1, -108)
 scroll.Position = UDim2.fromOffset(10, 57)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
@@ -164,32 +204,13 @@ scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 scroll.Parent = main
 
 local padding = Instance.new("UIPadding")
-padding.PaddingBottom = UDim.new(0, 12)
+padding.PaddingBottom = UDim.new(0, 6)
 padding.Parent = scroll
 
 local layout = Instance.new("UIListLayout")
 layout.Padding = UDim.new(0, 10)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 layout.Parent = scroll
-
-------------------------------------------------------------
--- BOUNDS CLAMPING
-------------------------------------------------------------
-
-local function getClampedPosition(targetSize)
-	local viewport = camera.ViewportSize
-	local screenPadding = 12
-
-	local halfW = targetSize.X / 2
-	local halfH = targetSize.Y / 2
-
-	local currentCenter = main.AbsolutePosition + (main.AbsoluteSize / 2)
-
-	local clampedX = math.clamp(currentCenter.X, halfW + screenPadding, viewport.X - halfW - screenPadding)
-	local clampedY = math.clamp(currentCenter.Y, halfH + screenPadding, viewport.Y - halfH - screenPadding)
-
-	return UDim2.fromOffset(clampedX, clampedY)
-end
 
 ------------------------------------------------------------
 -- MINIMIZE / EXPAND LOGIC
@@ -200,30 +221,40 @@ local function toggleMinimize()
 	minimized = not minimized
 
 	if minimized then
+		-- Save current menu position before shrinking
+		savedMenuPos = main.Position
+
 		scroll.Visible = false
 		header.BackgroundTransparency = 1
 		title.Visible = false
 		subtitle.Visible = false
 		minBtn.Visible = false
+		exitButton.Visible = false
 
+		-- Animate size to squircle and position to savedSquirclePos
 		TweenService:Create(
 			main,
-			TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
-			{ Size = UDim2.fromOffset(56, 56) }
+			TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+			{
+				Size = UDim2.fromOffset(56, 56),
+				Position = savedSquirclePos
+			}
 		):Play()
 
 		minLogo.Visible = true
 	else
+		-- Save current squircle position before expanding
+		savedSquirclePos = main.Position
+
 		minLogo.Visible = false
 
-		local targetPos = getClampedPosition(Vector2.new(330, 500))
-
+		-- Animate size back to menu and position back to savedMenuPos
 		local tween = TweenService:Create(
 			main,
-			TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+			TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
 			{
 				Size = UDim2.fromOffset(330, 500),
-				Position = targetPos
+				Position = savedMenuPos
 			}
 		)
 		tween:Play()
@@ -235,6 +266,7 @@ local function toggleMinimize()
 				title.Visible = true
 				subtitle.Visible = true
 				minBtn.Visible = true
+				exitButton.Visible = true
 			end
 		end)
 	end
@@ -288,12 +320,20 @@ UIS.InputChanged:Connect(function(input)
 	if exited then return end
 	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
 		local delta = input.Position - dragStart
-		main.Position = UDim2.new(
+		local newPos = UDim2.new(
 			startPosition.X.Scale,
 			startPosition.X.Offset + delta.X,
 			startPosition.Y.Scale,
 			startPosition.Y.Offset + delta.Y
 		)
+		main.Position = newPos
+
+		-- Dynamically update position state depending on mode
+		if minimized then
+			savedSquirclePos = newPos
+		else
+			savedMenuPos = newPos
+		end
 	end
 end)
 
@@ -950,11 +990,8 @@ UIS.InputEnded:Connect(function(input)
 end)
 
 ------------------------------------------------------------
--- EXIT / CLEANUP
+-- EXIT / CLEANUP ACTION
 ------------------------------------------------------------
-
-local exitButton = createButton(scroll, "DELETE UI / EXIT")
-exitButton.BackgroundColor3 = Color3.fromRGB(55, 28, 32)
 
 exitButton.MouseButton1Click:Connect(function()
 	if exited then return end
