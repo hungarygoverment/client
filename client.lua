@@ -43,24 +43,24 @@ local minimized = false
 
 -- INDEPENDENT POSITIONS
 local savedMenuPos = UDim2.fromScale(0.5, 0.5)      -- Default center for full menu
-local savedSquirclePos = UDim2.fromScale(0.5, 0.5)  -- Default top-right for squircle
+local savedSquirclePos = UDim2.fromScale(0.5, 0.5)  -- Default position for minimized icon
 
 ------------------------------------------------------------
--- GUI CREATION
+-- GUI CREATION (REDESIGNED LUXURY DARK THEME)
 ------------------------------------------------------------
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "AltUI"
+gui.Name = "LiquidGoldUI"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
 gui.Parent = playerGui
 
 local main = Instance.new("Frame")
-main.Name = "Main"
-main.Size = UDim2.fromOffset(330, 500)
+main.Name = "MainFrame"
+main.Size = UDim2.fromOffset(360, 540)
 main.Position = savedMenuPos
 main.AnchorPoint = Vector2.new(0.5, 0.5)
-main.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+main.BackgroundColor3 = Color3.fromRGB(13, 13, 15)
 main.BorderSizePixel = 0
 main.ClipsDescendants = true
 main.Parent = gui
@@ -70,8 +70,9 @@ mainCorner.CornerRadius = UDim.new(0, 14)
 mainCorner.Parent = main
 
 local mainStroke = Instance.new("UIStroke")
-mainStroke.Color = Color3.fromRGB(55, 55, 65)
-mainStroke.Thickness = 1
+mainStroke.Color = Color3.fromRGB(226, 183, 20)
+mainStroke.Transparency = 0.65
+mainStroke.Thickness = 1.5
 mainStroke.Parent = main
 
 ------------------------------------------------------------
@@ -80,7 +81,7 @@ mainStroke.Parent = main
 
 local minLogo = Instance.new("ImageLabel")
 minLogo.Name = "MinLogo"
-minLogo.Size = UDim2.fromScale(0.7, 0.7)
+minLogo.Size = UDim2.fromScale(0.65, 0.65)
 minLogo.Position = UDim2.fromScale(0.5, 0.5)
 minLogo.AnchorPoint = Vector2.new(0.5, 0.5)
 minLogo.BackgroundTransparency = 1
@@ -94,8 +95,9 @@ minLogo.Parent = main
 ------------------------------------------------------------
 
 local header = Instance.new("Frame")
-header.Size = UDim2.new(1, 0, 0, 52)
-header.BackgroundColor3 = Color3.fromRGB(24, 24, 29)
+header.Name = "Header"
+header.Size = UDim2.new(1, 0, 0, 58)
+header.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 header.BorderSizePixel = 0
 header.Parent = main
 
@@ -103,34 +105,52 @@ local headerCorner = Instance.new("UICorner")
 headerCorner.CornerRadius = UDim.new(0, 14)
 headerCorner.Parent = header
 
+local headerFix = Instance.new("Frame")
+headerFix.Size = UDim2.new(1, 0, 0, 12)
+headerFix.Position = UDim2.new(0, 0, 1, -12)
+headerFix.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+headerFix.BorderSizePixel = 0
+headerFix.Parent = header
+
+local brandIcon = Instance.new("Frame")
+brandIcon.Size = UDim2.fromOffset(6, 24)
+brandIcon.Position = UDim2.fromOffset(16, 17)
+brandIcon.BackgroundColor3 = Color3.fromRGB(226, 183, 20)
+brandIcon.BorderSizePixel = 0
+brandIcon.Parent = header
+
+local brandIconCorner = Instance.new("UICorner")
+brandIconCorner.CornerRadius = UDim.new(1, 0)
+brandIconCorner.Parent = brandIcon
+
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -70, 1, 0)
-title.Position = UDim2.fromOffset(15, 0)
+title.Size = UDim2.new(1, -90, 0, 20)
+title.Position = UDim2.fromOffset(30, 12)
 title.BackgroundTransparency = 1
-title.Text = "laszi's"
-title.TextColor3 = Color3.fromRGB(245, 245, 250)
+title.Text = "LIQUID GOLD"
+title.TextColor3 = Color3.fromRGB(240, 240, 245)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 18
+title.TextSize = 14
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 
 local subtitle = Instance.new("TextLabel")
-subtitle.Size = UDim2.new(1, -70, 0, 24)
-subtitle.Position = UDim2.fromOffset(15, 29)
+subtitle.Size = UDim2.new(1, -90, 0, 16)
+subtitle.Position = UDim2.fromOffset(30, 30)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = "Premium Liquid Gold"
-subtitle.TextColor3 = Color3.fromRGB(148, 113, 39)
-subtitle.Font = Enum.Font.Gotham
-subtitle.TextSize = 12
+subtitle.Text = "PREMIUM UTILITY PANEL"
+subtitle.TextColor3 = Color3.fromRGB(226, 183, 20)
+subtitle.Font = Enum.Font.GothamMedium
+subtitle.TextSize = 10
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
 subtitle.Parent = header
 
 local minBtn = Instance.new("TextButton")
 minBtn.Size = UDim2.fromOffset(28, 28)
-minBtn.Position = UDim2.new(1, -38, 0, 12)
-minBtn.BackgroundColor3 = Color3.fromRGB(32, 32, 39)
+minBtn.Position = UDim2.new(1, -40, 0, 15)
+minBtn.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
 minBtn.Text = "—"
-minBtn.TextColor3 = Color3.fromRGB(200, 200, 215)
+minBtn.TextColor3 = Color3.fromRGB(160, 160, 180)
 minBtn.Font = Enum.Font.GothamBold
 minBtn.TextSize = 12
 minBtn.AutoButtonColor = false
@@ -138,37 +158,37 @@ minBtn.BorderSizePixel = 0
 minBtn.Parent = header
 
 local minBtnCorner = Instance.new("UICorner")
-minBtnCorner.CornerRadius = UDim.new(0, 7)
+minBtnCorner.CornerRadius = UDim.new(0, 8)
 minBtnCorner.Parent = minBtn
 
 local minBtnStroke = Instance.new("UIStroke")
-minBtnStroke.Color = Color3.fromRGB(55, 55, 65)
+minBtnStroke.Color = Color3.fromRGB(40, 40, 50)
 minBtnStroke.Thickness = 1
 minBtnStroke.Parent = minBtn
 
 minBtn.MouseEnter:Connect(function()
 	if exited or minimized then return end
-	minBtn.BackgroundColor3 = Color3.fromRGB(42, 42, 51)
+	TweenService:Create(minBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(35, 35, 45), TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
 end)
 
 minBtn.MouseLeave:Connect(function()
 	if exited or minimized then return end
-	minBtn.BackgroundColor3 = Color3.fromRGB(32, 32, 39)
+	TweenService:Create(minBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(25, 25, 32), TextColor3 = Color3.fromRGB(160, 160, 180)}):Play()
 end)
 
 ------------------------------------------------------------
--- PINNED EXIT BUTTON (ALWAYS VISIBLE FOOTER)
+-- PINNED EXIT BUTTON (FOOTER)
 ------------------------------------------------------------
 
 local exitButton = Instance.new("TextButton")
 exitButton.Name = "ExitButton"
-exitButton.Size = UDim2.new(1, -20, 0, 36)
-exitButton.Position = UDim2.new(0, 10, 1, -46)
-exitButton.BackgroundColor3 = Color3.fromRGB(55, 28, 32)
-exitButton.Text = "DESTROY / EXIT"
-exitButton.TextColor3 = Color3.fromRGB(225, 225, 230)
-exitButton.Font = Enum.Font.GothamSemibold
-exitButton.TextSize = 12
+exitButton.Size = UDim2.new(1, -28, 0, 38)
+exitButton.Position = UDim2.new(0, 14, 1, -50)
+exitButton.BackgroundColor3 = Color3.fromRGB(32, 18, 22)
+exitButton.Text = "TERMINATE & UNLOAD"
+exitButton.TextColor3 = Color3.fromRGB(240, 80, 90)
+exitButton.Font = Enum.Font.GothamBold
+exitButton.TextSize = 11
 exitButton.AutoButtonColor = false
 exitButton.BorderSizePixel = 0
 exitButton.Parent = main
@@ -178,18 +198,18 @@ exitCorner.CornerRadius = UDim.new(0, 8)
 exitCorner.Parent = exitButton
 
 local exitStroke = Instance.new("UIStroke")
-exitStroke.Color = Color3.fromRGB(80, 40, 45)
+exitStroke.Color = Color3.fromRGB(70, 25, 35)
 exitStroke.Thickness = 1
 exitStroke.Parent = exitButton
 
 exitButton.MouseEnter:Connect(function()
 	if exited or minimized then return end
-	exitButton.BackgroundColor3 = Color3.fromRGB(75, 35, 40)
+	TweenService:Create(exitButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 22, 28), TextColor3 = Color3.fromRGB(255, 110, 120)}):Play()
 end)
 
 exitButton.MouseLeave:Connect(function()
 	if exited or minimized then return end
-	exitButton.BackgroundColor3 = Color3.fromRGB(55, 28, 32)
+	TweenService:Create(exitButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(32, 18, 22), TextColor3 = Color3.fromRGB(240, 80, 90)}):Play()
 end)
 
 ------------------------------------------------------------
@@ -197,22 +217,24 @@ end)
 ------------------------------------------------------------
 
 local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, -20, 1, -108)
-scroll.Position = UDim2.fromOffset(10, 57)
+scroll.Size = UDim2.new(1, -20, 1, -122)
+scroll.Position = UDim2.fromOffset(10, 64)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
 scroll.ScrollBarThickness = 3
-scroll.ScrollBarImageColor3 = Color3.fromRGB(70, 70, 80)
+scroll.ScrollBarImageColor3 = Color3.fromRGB(226, 183, 20)
+scroll.ScrollBarImageTransparency = 0.5
 scroll.CanvasSize = UDim2.new()
 scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 scroll.Parent = main
 
 local padding = Instance.new("UIPadding")
-padding.PaddingBottom = UDim.new(0, 6)
+padding.PaddingBottom = UDim.new(0, 10)
+padding.PaddingRight = UDim.new(0, 4)
 padding.Parent = scroll
 
 local layout = Instance.new("UIListLayout")
-layout.Padding = UDim.new(0, 10)
+layout.Padding = UDim.new(0, 12)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 layout.Parent = scroll
 
@@ -229,6 +251,8 @@ local function toggleMinimize()
 
 		scroll.Visible = false
 		header.BackgroundTransparency = 1
+		headerFix.Visible = false
+		brandIcon.Visible = false
 		title.Visible = false
 		subtitle.Visible = false
 		minBtn.Visible = false
@@ -238,7 +262,7 @@ local function toggleMinimize()
 			main,
 			TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
 			{
-				Size = UDim2.fromOffset(56, 56),
+				Size = UDim2.fromOffset(58, 58),
 				Position = savedSquirclePos
 			}
 		):Play()
@@ -253,7 +277,7 @@ local function toggleMinimize()
 			main,
 			TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
 			{
-				Size = UDim2.fromOffset(330, 500),
+				Size = UDim2.fromOffset(360, 540),
 				Position = savedMenuPos
 			}
 		)
@@ -263,6 +287,8 @@ local function toggleMinimize()
 			if not minimized and not exited then
 				scroll.Visible = true
 				header.BackgroundTransparency = 0
+				headerFix.Visible = true
+				brandIcon.Visible = true
 				title.Visible = true
 				subtitle.Visible = true
 				minBtn.Visible = true
@@ -342,10 +368,10 @@ end)
 
 local function createSection(titleText)
 	local section = Instance.new("Frame")
-	section.BackgroundColor3 = Color3.fromRGB(23, 23, 28)
+	section.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 	section.BorderSizePixel = 0
 	section.AutomaticSize = Enum.AutomaticSize.Y
-	section.Size = UDim2.new(1, -4, 0, 0)
+	section.Size = UDim2.new(1, -2, 0, 0)
 	section.Parent = scroll
 
 	local corner = Instance.new("UICorner")
@@ -353,7 +379,7 @@ local function createSection(titleText)
 	corner.Parent = section
 
 	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(45, 45, 55)
+	stroke.Color = Color3.fromRGB(32, 32, 40)
 	stroke.Thickness = 1
 	stroke.Parent = section
 
@@ -365,17 +391,17 @@ local function createSection(titleText)
 	content.Parent = section
 
 	local contentLayout = Instance.new("UIListLayout")
-	contentLayout.Padding = UDim.new(0, 7)
+	contentLayout.Padding = UDim.new(0, 8)
 	contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	contentLayout.Parent = content
 
 	local heading = Instance.new("TextLabel")
-	heading.Size = UDim2.new(1, 0, 0, 24)
+	heading.Size = UDim2.new(1, 0, 0, 18)
 	heading.BackgroundTransparency = 1
-	heading.Text = titleText
-	heading.TextColor3 = Color3.fromRGB(230, 230, 235)
+	heading.Text = string.upper(titleText)
+	heading.TextColor3 = Color3.fromRGB(226, 183, 20)
 	heading.Font = Enum.Font.GothamBold
-	heading.TextSize = 13
+	heading.TextSize = 10
 	heading.TextXAlignment = Enum.TextXAlignment.Left
 	heading.LayoutOrder = 0
 	heading.Parent = content
@@ -385,33 +411,33 @@ end
 
 local function createButton(parent, text)
 	local button = Instance.new("TextButton")
-	button.Size = UDim2.new(1, 0, 0, 34)
-	button.BackgroundColor3 = Color3.fromRGB(32, 32, 39)
+	button.Size = UDim2.new(1, 0, 0, 32)
+	button.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
 	button.Text = text
-	button.TextColor3 = Color3.fromRGB(225, 225, 230)
-	button.Font = Enum.Font.GothamSemibold
-	button.TextSize = 12
+	button.TextColor3 = Color3.fromRGB(210, 210, 225)
+	button.Font = Enum.Font.GothamMedium
+	button.TextSize = 11
 	button.AutoButtonColor = false
 	button.BorderSizePixel = 0
 	button.Parent = parent
 
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 7)
+	corner.CornerRadius = UDim.new(0, 8)
 	corner.Parent = button
 
 	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.fromRGB(55, 55, 65)
+	stroke.Color = Color3.fromRGB(38, 38, 48)
 	stroke.Thickness = 1
 	stroke.Parent = button
 
 	button.MouseEnter:Connect(function()
 		if exited then return end
-		button.BackgroundColor3 = Color3.fromRGB(42, 42, 51)
+		TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(32, 32, 42)}):Play()
 	end)
 
 	button.MouseLeave:Connect(function()
 		if exited then return end
-		button.BackgroundColor3 = Color3.fromRGB(32, 32, 39)
+		TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(24, 24, 30)}):Play()
 	end)
 
 	return button
@@ -419,11 +445,11 @@ end
 
 local function createLabel(parent, text)
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(1, 0, 0, 20)
+	label.Size = UDim2.new(1, 0, 0, 18)
 	label.BackgroundTransparency = 1
 	label.Text = text
-	label.TextColor3 = Color3.fromRGB(160, 160, 175)
-	label.Font = Enum.Font.Gotham
+	label.TextColor3 = Color3.fromRGB(150, 150, 168)
+	label.Font = Enum.Font.GothamMedium
 	label.TextSize = 11
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.Parent = parent
@@ -551,7 +577,8 @@ local function addHighlight(targetPlayer)
 
 	-- Highlight Object
 	local h = Instance.new("Highlight")
-	h.FillColor = Color3.fromRGB(255, 0, 0)
+	h.FillColor = Color3.fromRGB(226, 183, 20)
+	h.OutlineColor = Color3.fromRGB(255, 255, 255)
 	h.FillTransparency = 0.5
 	h.Adornee = char
 	h.Parent = char
@@ -696,8 +723,8 @@ end
 -- HIGHLIGHT SECTION UI & BUTTONS
 ------------------------------------------------------------
 
-local highlightSection = createSection("ESP / HIGHLIGHTS")
-local highlightButton = createButton(highlightSection, "ESP System: OFF")
+local highlightSection = createSection("Visuals & ESP")
+local highlightButton = createButton(highlightSection, "ESP Master Toggle: OFF")
 local chamsButton = createButton(highlightSection, "Chams (Glow): ON")
 local namesButton = createButton(highlightSection, "Name Tags: ON")
 local healthBtn = createButton(highlightSection, "Health Bars: ON")
@@ -709,11 +736,11 @@ highlightButton.MouseButton1Click:Connect(function()
 	highlightEnabled = not highlightEnabled
 
 	if highlightEnabled then
-		highlightButton.Text = "ESP System: ON"
-		highlightButton.TextColor3 = Color3.fromRGB(80, 180, 255)
+		highlightButton.Text = "ESP Master Toggle: ON"
+		highlightButton.TextColor3 = Color3.fromRGB(226, 183, 20)
 	else
-		highlightButton.Text = "ESP System: OFF"
-		highlightButton.TextColor3 = Color3.fromRGB(225, 225, 230)
+		highlightButton.Text = "ESP Master Toggle: OFF"
+		highlightButton.TextColor3 = Color3.fromRGB(210, 210, 225)
 		removeHighlights()
 	end
 end)
@@ -723,7 +750,7 @@ chamsButton.MouseButton1Click:Connect(function()
 	if exited then return end
 	Config.ShowChams = not Config.ShowChams
 	chamsButton.Text = Config.ShowChams and "Chams (Glow): ON" or "Chams (Glow): OFF"
-	chamsButton.TextColor3 = Config.ShowChams and Color3.fromRGB(225, 225, 230) or Color3.fromRGB(130, 130, 140)
+	chamsButton.TextColor3 = Config.ShowChams and Color3.fromRGB(210, 210, 225) or Color3.fromRGB(120, 120, 135)
 	refreshAllESPVisuals()
 end)
 
@@ -732,7 +759,7 @@ namesButton.MouseButton1Click:Connect(function()
 	if exited then return end
 	Config.ShowNames = not Config.ShowNames
 	namesButton.Text = Config.ShowNames and "Name Tags: ON" or "Name Tags: OFF"
-	namesButton.TextColor3 = Config.ShowNames and Color3.fromRGB(225, 225, 230) or Color3.fromRGB(130, 130, 140)
+	namesButton.TextColor3 = Config.ShowNames and Color3.fromRGB(210, 210, 225) or Color3.fromRGB(120, 120, 135)
 	refreshAllESPVisuals()
 end)
 
@@ -741,7 +768,7 @@ healthBtn.MouseButton1Click:Connect(function()
 	if exited then return end
 	Config.ShowHealth = not Config.ShowHealth
 	healthBtn.Text = Config.ShowHealth and "Health Bars: ON" or "Health Bars: OFF"
-	healthBtn.TextColor3 = Config.ShowHealth and Color3.fromRGB(225, 225, 230) or Color3.fromRGB(130, 130, 140)
+	healthBtn.TextColor3 = Config.ShowHealth and Color3.fromRGB(210, 210, 225) or Color3.fromRGB(120, 120, 135)
 	refreshAllESPVisuals()
 end)
 
@@ -761,16 +788,17 @@ end)
 -- FLY MECHANICS
 ------------------------------------------------------------
 
-local flySection = createSection("FLY")
-local flyKeyLabel = createLabel(flySection, "Fly Key: " .. Config.FlyKey.Name)
+local flySection = createSection("Flight Capabilities")
+local flyKeyLabel = createLabel(flySection, "Fly Keybind: [" .. Config.FlyKey.Name .. "]")
 local flyKeyButton = createButton(flySection, "Change Fly Key")
-local flyStatus = createButton(flySection, "Fly: OFF")
+local flyStatus = createButton(flySection, "Flight System: OFF")
 
 local flyConnection = nil
 
 local function noclipOn()
 	local char = player.Character
 	if not char then return end
+
 	for _, part in ipairs(char:GetDescendants()) do
 		if part:IsA("BasePart") then
 			part.CanCollide = false
@@ -781,16 +809,25 @@ end
 local function noclipOff()
 	local char = player.Character
 	if not char then return end
-	
-	local mainParts = {"HumanoidRootPart", "Torso", "UpperTorso", "LowerTorso", "Head"}
+
+	local mainParts = {
+		"HumanoidRootPart",
+		"Torso",
+		"UpperTorso",
+		"LowerTorso",
+		"Head"
+	}
+
 	for _, partName in ipairs(mainParts) do
 		local part = char:FindFirstChild(partName)
+
 		if part and part:IsA("BasePart") then
 			part.CanCollide = true
 		end
 	end
-	
+
 	local hum = char:FindFirstChildOfClass("Humanoid")
+
 	if hum then
 		hum:ChangeState(Enum.HumanoidStateType.GettingUp)
 	end
@@ -798,8 +835,9 @@ end
 
 local function stopFly()
 	flying = false
-	flyStatus.Text = "Fly: OFF"
-	flyStatus.TextColor3 = Color3.fromRGB(225, 225, 230)
+
+	flyStatus.Text = "Flight System: OFF"
+	flyStatus.TextColor3 = Color3.fromRGB(210, 210, 225)
 
 	if flyConnection then
 		flyConnection:Disconnect()
@@ -807,10 +845,15 @@ local function stopFly()
 	end
 
 	local char = player.Character
-	if char and char:FindFirstChild("HumanoidRootPart") then
-		for _, obj in ipairs(char.HumanoidRootPart:GetChildren()) do
-			if obj:IsA("BodyVelocity") then
-				obj:Destroy()
+
+	if char then
+		local root = char:FindFirstChild("HumanoidRootPart")
+
+		if root then
+			for _, obj in ipairs(root:GetChildren()) do
+				if obj:IsA("BodyVelocity") then
+					obj:Destroy()
+				end
 			end
 		end
 	end
@@ -819,18 +862,25 @@ local function stopFly()
 end
 
 local function startFly()
-	flying = true
-	flyStatus.Text = "Fly: ON"
-	flyStatus.TextColor3 = Color3.fromRGB(80, 180, 255)
-
 	local char = player.Character
 	if not char then return end
 
 	local root = char:FindFirstChild("HumanoidRootPart")
 	if not root then return end
 
+	flying = true
+
+	flyStatus.Text = "Flight System: ON"
+	flyStatus.TextColor3 = Color3.fromRGB(226, 183, 20)
+
 	local bv = Instance.new("BodyVelocity")
-	bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+
+	bv.MaxForce = Vector3.new(
+		1e6,
+		1e6,
+		1e6
+	)
+
 	bv.Velocity = Vector3.zero
 	bv.Parent = root
 
@@ -840,40 +890,80 @@ local function startFly()
 			return
 		end
 
+		if not root.Parent then
+			stopFly()
+			return
+		end
+
 		noclipOn()
 
 		local move = Vector3.zero
-		if UIS:IsKeyDown(Enum.KeyCode.W) then move += camera.CFrame.LookVector end
-		if UIS:IsKeyDown(Enum.KeyCode.S) then move -= camera.CFrame.LookVector end
-		if UIS:IsKeyDown(Enum.KeyCode.A) then move -= camera.CFrame.RightVector end
-		if UIS:IsKeyDown(Enum.KeyCode.D) then move += camera.CFrame.RightVector end
-		if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
-		if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0, 1, 0) end
+
+		if UIS:IsKeyDown(Enum.KeyCode.W) then
+			move += camera.CFrame.LookVector
+		end
+
+		if UIS:IsKeyDown(Enum.KeyCode.S) then
+			move -= camera.CFrame.LookVector
+		end
+
+		if UIS:IsKeyDown(Enum.KeyCode.A) then
+			move -= camera.CFrame.RightVector
+		end
+
+		if UIS:IsKeyDown(Enum.KeyCode.D) then
+			move += camera.CFrame.RightVector
+		end
+
+		if UIS:IsKeyDown(Enum.KeyCode.Space) then
+			move += Vector3.new(0, 1, 0)
+		end
+
+		if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then
+			move -= Vector3.new(0, 1, 0)
+		end
+
+		if move.Magnitude > 0 then
+			move = move.Unit
+		end
 
 		bv.Velocity = move * flySpeed
 	end)
 end
 
 local function toggleFly()
-	if flying then stopFly() else startFly() end
+	if flying then
+		stopFly()
+	else
+		startFly()
+	end
 end
 
 flyStatus.MouseButton1Click:Connect(function()
 	if exited then return end
+
 	toggleFly()
 end)
 
 flyKeyButton.MouseButton1Click:Connect(function()
 	if exited then return end
+
 	flyKeyButton.Text = "Press a key..."
 
 	local connection
+
 	connection = UIS.InputBegan:Connect(function(input)
-		if exited then connection:Disconnect() return end
+		if exited then
+			connection:Disconnect()
+			return
+		end
+
 		if input.KeyCode ~= Enum.KeyCode.Unknown then
 			Config.FlyKey = input.KeyCode
-			flyKeyLabel.Text = "Fly Key: " .. Config.FlyKey.Name
+
+			flyKeyLabel.Text = "Fly Keybind: [" .. Config.FlyKey.Name .. "]"
 			flyKeyButton.Text = "Change Fly Key"
+
 			connection:Disconnect()
 		end
 	end)
@@ -912,20 +1002,20 @@ local function checkAimTargetValidity(targetPlayer)
 	return true, part, cursorDist
 end
 
-local aimSection = createSection("AIM")
-local aimKeyLabel = createLabel(aimSection, "Aim Toggle Key: " .. Config.AimKey.Name)
+local aimSection = createSection("Combat & Aimbot")
+local aimKeyLabel = createLabel(aimSection, "Aim Toggle Key: [" .. Config.AimKey.Name .. "]")
 local aimKeyButton = createButton(aimSection, "Change Aim Key")
 local aimTargetButton = createButton(aimSection, "Aim Target: HEAD")
 local aimVisibilityButton = createButton(aimSection, "Aim Visibility: EVERY")
-local aimStatus = createButton(aimSection, "Aim System: OFF")
+local aimStatus = createButton(aimSection, "Aim Lock System: OFF")
 
 local function updateAimUI()
 	if aimToggleState then
-		aimStatus.Text = "Aim System: ON"
-		aimStatus.TextColor3 = Color3.fromRGB(80, 180, 255)
+		aimStatus.Text = "Aim Lock System: ON"
+		aimStatus.TextColor3 = Color3.fromRGB(226, 183, 20)
 	else
-		aimStatus.Text = "Aim System: OFF"
-		aimStatus.TextColor3 = Color3.fromRGB(225, 225, 230)
+		aimStatus.Text = "Aim Lock System: OFF"
+		aimStatus.TextColor3 = Color3.fromRGB(210, 210, 225)
 	end
 end
 
@@ -951,7 +1041,7 @@ aimKeyButton.MouseButton1Click:Connect(function()
 		if exited then connection:Disconnect() return end
 		if input.KeyCode ~= Enum.KeyCode.Unknown then
 			Config.AimKey = input.KeyCode
-			aimKeyLabel.Text = "Aim Toggle Key: " .. Config.AimKey.Name
+			aimKeyLabel.Text = "Aim Toggle Key: [" .. Config.AimKey.Name .. "]"
 			aimKeyButton.Text = "Change Aim Key"
 			connection:Disconnect()
 		end
@@ -1026,17 +1116,23 @@ end)
 -- RUN MECHANICS & PERSISTENT WALK SPEED
 ------------------------------------------------------------
 
-local runSection = createSection("RUN")
-local runKeyLabel = createLabel(runSection, "Run Key: " .. Config.RunKey.Name)
+local runSection = createSection("Movement Speed")
+local runKeyLabel = createLabel(runSection, "Run Keybind: [" .. Config.RunKey.Name .. "]")
 local runKeyButton = createButton(runSection, "Change Run Key")
 local runModeButton = createButton(runSection, "Run Mode: HOLD")
 local speedLabel = createLabel(runSection, "Run Speed: " .. Config.RunSpeed)
 
+local sliderContainer = Instance.new("Frame")
+sliderContainer.Size = UDim2.new(1, 0, 0, 16)
+sliderContainer.BackgroundTransparency = 1
+sliderContainer.Parent = runSection
+
 local slider = Instance.new("Frame")
-slider.Size = UDim2.new(1, 0, 0, 8)
-slider.BackgroundColor3 = Color3.fromRGB(40, 40, 48)
+slider.Size = UDim2.new(1, 0, 0, 6)
+slider.Position = UDim2.new(0, 0, 0.5, -3)
+slider.BackgroundColor3 = Color3.fromRGB(28, 28, 36)
 slider.BorderSizePixel = 0
-slider.Parent = runSection
+slider.Parent = sliderContainer
 
 local sliderCorner = Instance.new("UICorner")
 sliderCorner.CornerRadius = UDim.new(1, 0)
@@ -1044,13 +1140,25 @@ sliderCorner.Parent = slider
 
 local fill = Instance.new("Frame")
 fill.Size = UDim2.new(Config.RunSpeed / 100, 0, 1, 0)
-fill.BackgroundColor3 = Color3.fromRGB(70, 150, 255)
+fill.BackgroundColor3 = Color3.fromRGB(226, 183, 20)
 fill.BorderSizePixel = 0
 fill.Parent = slider
 
 local fillCorner = Instance.new("UICorner")
 fillCorner.CornerRadius = UDim.new(1, 0)
 fillCorner.Parent = fill
+
+local thumb = Instance.new("Frame")
+thumb.Size = UDim2.fromOffset(14, 14)
+thumb.Position = UDim2.new(1, 0, 0.5, 0)
+thumb.AnchorPoint = Vector2.new(0.5, 0.5)
+thumb.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+thumb.BorderSizePixel = 0
+thumb.Parent = fill
+
+local thumbCorner = Instance.new("UICorner")
+thumbCorner.CornerRadius = UDim.new(1, 0)
+thumbCorner.Parent = thumb
 
 local sliderDragging = false
 
@@ -1066,7 +1174,7 @@ local function updateSlider(x)
 	end
 end
 
-slider.InputBegan:Connect(function(input)
+sliderContainer.InputBegan:Connect(function(input)
 	if exited then return end
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		sliderDragging = true
@@ -1097,7 +1205,7 @@ runKeyButton.MouseButton1Click:Connect(function()
 		if exited then connection:Disconnect() return end
 		if input.KeyCode ~= Enum.KeyCode.Unknown then
 			Config.RunKey = input.KeyCode
-			runKeyLabel.Text = "Run Key: " .. Config.RunKey.Name
+			runKeyLabel.Text = "Run Keybind: [" .. Config.RunKey.Name .. "]"
 			runKeyButton.Text = "Change Run Key"
 			connection:Disconnect()
 		end
@@ -1115,54 +1223,40 @@ runModeButton.MouseButton1Click:Connect(function()
 	end
 end)
 
-RS.Stepped:Connect(function()
-	if exited then return end
-	if running then
-		local char = player.Character
-		local hum = char and char:FindFirstChildOfClass("Humanoid")
-		if hum and hum.WalkSpeed ~= Config.RunSpeed then
-			hum.WalkSpeed = Config.RunSpeed
-		end
-	end
-end)
-
 ------------------------------------------------------------
--- INPUT LISTENER (HOTKEYS & AIM BUTTON)
+-- KEYBOARD & MOUSE INPUT CONTROLLERS
 ------------------------------------------------------------
 
-UIS.InputBegan:Connect(function(input)
-	if exited then return end
+UIS.InputBegan:Connect(function(input, gameProcessed)
+	if exited or gameProcessed then return end
 
+	-- Fly Activation Key
 	if input.KeyCode == Config.FlyKey then
 		toggleFly()
 	end
 
+	-- Aim System Master Switch Key
 	if input.KeyCode == Config.AimKey then
 		aimToggleState = not aimToggleState
-		if aimToggleState then
-			if UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-				aiming = true
-			end
-		else
-			aiming = false
-		end
 		updateAimUI()
 	end
 
-	if input.UserInputType == Enum.UserInputType.MouseButton2 and aimToggleState then
-		aiming = true
+	-- Active Aim Lock Mouse Button
+	if input.UserInputType == Enum.UserInputType.MouseButton2 then
+		if aimToggleState then
+			aiming = true
+		end
 	end
 
+	-- Run Activation Key
 	if input.KeyCode == Config.RunKey then
 		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-		if not hum then return end
-
 		if Config.RunMode == "Hold" then
 			running = true
-			hum.WalkSpeed = Config.RunSpeed
+			if hum then hum.WalkSpeed = Config.RunSpeed end
 		else
 			running = not running
-			hum.WalkSpeed = running and Config.RunSpeed or 16
+			if hum then hum.WalkSpeed = running and Config.RunSpeed or 16 end
 		end
 	end
 end)
@@ -1182,48 +1276,16 @@ UIS.InputEnded:Connect(function(input)
 end)
 
 ------------------------------------------------------------
--- EXIT / CLEANUP ACTION
+-- DESTROY / EXIT CLEANUP
 ------------------------------------------------------------
 
 exitButton.MouseButton1Click:Connect(function()
-	if exited then return end
 	exited = true
-
-	running = false
-	highlightEnabled = false
+	stopFly()
 	removeHighlights()
 
-	if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
-		player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 16
-	end
+	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	if hum then hum.WalkSpeed = 16 end
 
-	stopFly()
-	aimToggleState = false
-	aiming = false
-
-	local tween = TweenService:Create(
-		main,
-		TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-		{
-			Size = UDim2.fromOffset(300, 0),
-			BackgroundTransparency = 1
-		}
-	)
-
-	tween:Play()
-	tween.Completed:Connect(function()
-		gui:Destroy()
-		script:Destroy()
-	end)
+	gui:Destroy()
 end)
-
-------------------------------------------------------------
--- LOAD ANIMATION
-------------------------------------------------------------
-
-main.Size = UDim2.fromOffset(330, 0)
-TweenService:Create(
-	main,
-	TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
-	{ Size = UDim2.fromOffset(330, 500) }
-):Play()
