@@ -24,6 +24,10 @@ local Config = {
 	AimVisibility = "Every", -- "Every" or "Only Visible"
 	AimFOV = 150, -- Maximum pixel distance from cursor for Aim ONLY
 
+	-- ESP Toggles
+	ShowChams = true,
+	ShowNames = true,
+	ShowHealth = true,
 	HighlightVisibility = "Every", -- "Every" or "Only Visible"
 }
 
@@ -468,7 +472,7 @@ local function isPartVisible(part)
 end
 
 ------------------------------------------------------------
--- HIGHLIGHT & NAMETAG MECHANICS
+-- HIGHLIGHT, NAMETAG & HEALTHBAR MECHANICS
 ------------------------------------------------------------
 
 local function checkHighlightValidity(targetPlayer)
@@ -488,10 +492,53 @@ local function checkHighlightValidity(targetPlayer)
 	return isPartVisible(part)
 end
 
+local function applyESPVisibility(data)
+	if not data then return end
+
+	-- Chams (Outline Highlight) Toggle
+	if data.Highlight then
+		data.Highlight.Enabled = Config.ShowChams
+	end
+
+	-- Billboard Tags Toggles & Dynamic Sizing
+	if data.Nametag then
+		local showName = Config.ShowNames
+		local showHealth = Config.ShowHealth
+
+		data.Nametag.Enabled = showName or showHealth
+
+		if showName and showHealth then
+			data.Nametag.Size = UDim2.new(0, 160, 0, 45)
+			if data.NameLabel then 
+				data.NameLabel.Visible = true 
+				data.NameLabel.Position = UDim2.new(0, 0, 0, 0)
+			end
+			if data.HealthBg then 
+				data.HealthBg.Visible = true 
+				data.HealthBg.Position = UDim2.new(0, 0, 0, 22)
+			end
+		elseif showName then
+			data.Nametag.Size = UDim2.new(0, 160, 0, 20)
+			if data.NameLabel then 
+				data.NameLabel.Visible = true 
+				data.NameLabel.Position = UDim2.new(0, 0, 0, 0)
+			end
+			if data.HealthBg then data.HealthBg.Visible = false end
+		elseif showHealth then
+			data.Nametag.Size = UDim2.new(0, 160, 0, 12)
+			if data.NameLabel then data.NameLabel.Visible = false end
+			if data.HealthBg then 
+				data.HealthBg.Visible = true 
+				data.HealthBg.Position = UDim2.new(0, 0, 0, 0)
+			end
+		end
+	end
+end
+
 local function addHighlight(targetPlayer)
 	if exited or not targetPlayer.Character then return end
 
-	-- Clean up existing instances and connections if present
+	-- Clean up existing instances if present
 	if highlights[targetPlayer] then
 		if highlights[targetPlayer].Conn then highlights[targetPlayer].Conn:Disconnect() end
 		if highlights[targetPlayer].Highlight then highlights[targetPlayer].Highlight:Destroy() end
@@ -502,23 +549,23 @@ local function addHighlight(targetPlayer)
 	local head = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
 	local hum = char:FindFirstChildOfClass("Humanoid")
 
-	-- 1. Create Highlight Instance
+	-- Highlight Object
 	local h = Instance.new("Highlight")
 	h.FillColor = Color3.fromRGB(255, 0, 0)
 	h.FillTransparency = 0.5
 	h.Adornee = char
 	h.Parent = char
 
-	-- 2. Create BillboardGui (Tall enough for text + health bar)
+	-- BillboardGui Container
 	local billboard = Instance.new("BillboardGui")
 	billboard.Name = "ESP_NameTag"
 	billboard.Adornee = head
 	billboard.Size = UDim2.new(0, 160, 0, 45)
-	billboard.StudsOffset = Vector3.new(0, 3.8, 0) -- Height above player head
+	billboard.StudsOffset = Vector3.new(0, 3.8, 0)
 	billboard.AlwaysOnTop = true
 	billboard.Parent = char
 
-	-- 3. Player Name Label
+	-- Name Label
 	local nameLabel = Instance.new("TextLabel")
 	nameLabel.Size = UDim2.new(1, 0, 0, 20)
 	nameLabel.Position = UDim2.new(0, 0, 0, 0)
@@ -530,7 +577,7 @@ local function addHighlight(targetPlayer)
 	nameLabel.TextSize = 12
 	nameLabel.Parent = billboard
 
-	-- 4. Health Bar Background Frame
+	-- Health Bar Background
 	local healthBg = Instance.new("Frame")
 	healthBg.Size = UDim2.new(1, 0, 0, 8)
 	healthBg.Position = UDim2.new(0, 0, 0, 22)
@@ -547,7 +594,7 @@ local function addHighlight(targetPlayer)
 	bgStroke.Thickness = 1
 	bgStroke.Parent = healthBg
 
-	-- 5. Active Health Fill Bar
+	-- Active Health Fill Bar
 	local healthFill = Instance.new("Frame")
 	healthFill.Size = UDim2.fromScale(1, 1)
 	healthFill.BackgroundColor3 = Color3.fromRGB(0, 255, 120)
@@ -558,7 +605,7 @@ local function addHighlight(targetPlayer)
 	fillCorner.CornerRadius = UDim.new(0, 4)
 	fillCorner.Parent = healthFill
 
-	-- 6. Health Text Overlay
+	-- Health Text Readout
 	local healthText = Instance.new("TextLabel")
 	healthText.Size = UDim2.fromScale(1, 1)
 	healthText.BackgroundTransparency = 1
@@ -568,7 +615,7 @@ local function addHighlight(targetPlayer)
 	healthText.TextSize = 9
 	healthText.Parent = healthBg
 
-	-- Update Health Display Logic
+	-- Dynamic Health Updates
 	local function updateHealthDisplay()
 		if not hum or hum.MaxHealth <= 0 then return end
 		local ratio = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
@@ -576,29 +623,29 @@ local function addHighlight(targetPlayer)
 		healthFill.Size = UDim2.fromScale(ratio, 1)
 		healthText.Text = math.floor(hum.Health) .. " / " .. math.floor(hum.MaxHealth)
 
-		-- Dynamic Color: Green -> Yellow -> Red
 		if ratio > 0.5 then
-			-- Interpolate Green to Yellow
 			healthFill.BackgroundColor3 = Color3.fromRGB(0, 255, 120):Lerp(Color3.fromRGB(255, 210, 0), (1 - ratio) * 2)
 		else
-			-- Interpolate Yellow to Red
 			healthFill.BackgroundColor3 = Color3.fromRGB(255, 210, 0):Lerp(Color3.fromRGB(255, 50, 50), (0.5 - ratio) * 2)
 		end
 	end
 
-	-- Initial update & event connection
 	updateHealthDisplay()
 	local healthConn = nil
 	if hum then
 		healthConn = hum.HealthChanged:Connect(updateHealthDisplay)
 	end
 
-	-- Save tracking entry
-	highlights[targetPlayer] = {
+	local data = {
 		Highlight = h,
 		Nametag = billboard,
+		NameLabel = nameLabel,
+		HealthBg = healthBg,
 		Conn = healthConn
 	}
+
+	highlights[targetPlayer] = data
+	applyESPVisibility(data)
 end
 
 local function removeHighlights()
@@ -609,6 +656,14 @@ local function removeHighlights()
 			if data.Nametag then data.Nametag:Destroy() end
 		end
 		highlights[p] = nil
+	end
+end
+
+local function refreshAllESPVisuals()
+	for _, data in pairs(highlights) do
+		if typeof(data) == "table" then
+			applyESPVisibility(data)
+		end
 	end
 end
 
@@ -637,32 +692,68 @@ local function updateHighlights()
 	end
 end
 
-local highlightSection = createSection("HIGHLIGHT")
-local highlightButton = createButton(highlightSection, "Highlight: OFF")
-local highlightVisibilityButton = createButton(highlightSection, "Highlight Visibility: EVERY")
+------------------------------------------------------------
+-- HIGHLIGHT SECTION UI & BUTTONS
+------------------------------------------------------------
 
+local highlightSection = createSection("ESP / HIGHLIGHTS")
+local highlightButton = createButton(highlightSection, "ESP System: OFF")
+local chamsButton = createButton(highlightSection, "Chams (Glow): ON")
+local namesButton = createButton(highlightSection, "Name Tags: ON")
+local healthBtn = createButton(highlightSection, "Health Bars: ON")
+local highlightVisibilityButton = createButton(highlightSection, "ESP Visibility: EVERY")
+
+-- Main Master ESP Toggle
 highlightButton.MouseButton1Click:Connect(function()
 	if exited then return end
 	highlightEnabled = not highlightEnabled
 
 	if highlightEnabled then
-		highlightButton.Text = "Highlight: ON"
+		highlightButton.Text = "ESP System: ON"
 		highlightButton.TextColor3 = Color3.fromRGB(80, 180, 255)
 	else
-		highlightButton.Text = "Highlight: OFF"
+		highlightButton.Text = "ESP System: OFF"
 		highlightButton.TextColor3 = Color3.fromRGB(225, 225, 230)
 		removeHighlights()
 	end
 end)
 
+-- Chams Toggle
+chamsButton.MouseButton1Click:Connect(function()
+	if exited then return end
+	Config.ShowChams = not Config.ShowChams
+	chamsButton.Text = Config.ShowChams and "Chams (Glow): ON" or "Chams (Glow): OFF"
+	chamsButton.TextColor3 = Config.ShowChams and Color3.fromRGB(225, 225, 230) or Color3.fromRGB(130, 130, 140)
+	refreshAllESPVisuals()
+end)
+
+-- Names Toggle
+namesButton.MouseButton1Click:Connect(function()
+	if exited then return end
+	Config.ShowNames = not Config.ShowNames
+	namesButton.Text = Config.ShowNames and "Name Tags: ON" or "Name Tags: OFF"
+	namesButton.TextColor3 = Config.ShowNames and Color3.fromRGB(225, 225, 230) or Color3.fromRGB(130, 130, 140)
+	refreshAllESPVisuals()
+end)
+
+-- Health Bar Toggle
+healthBtn.MouseButton1Click:Connect(function()
+	if exited then return end
+	Config.ShowHealth = not Config.ShowHealth
+	healthBtn.Text = Config.ShowHealth and "Health Bars: ON" or "Health Bars: OFF"
+	healthBtn.TextColor3 = Config.ShowHealth and Color3.fromRGB(225, 225, 230) or Color3.fromRGB(130, 130, 140)
+	refreshAllESPVisuals()
+end)
+
+-- Visibility Check Toggle
 highlightVisibilityButton.MouseButton1Click:Connect(function()
 	if exited then return end
 	if Config.HighlightVisibility == "Every" then
 		Config.HighlightVisibility = "Only Visible"
-		highlightVisibilityButton.Text = "Highlight Visibility: ONLY VISIBLE"
+		highlightVisibilityButton.Text = "ESP Visibility: ONLY VISIBLE"
 	else
 		Config.HighlightVisibility = "Every"
-		highlightVisibilityButton.Text = "Highlight Visibility: EVERY"
+		highlightVisibilityButton.Text = "ESP Visibility: EVERY"
 	end
 end)
 
