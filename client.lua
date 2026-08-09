@@ -31,13 +31,14 @@ local aimToggleState = false -- Master switch toggle (Aim Key)
 local aiming = false         -- Active aim locking state (Right Click)
 local running = false
 local exited = false
+local minimized = false
 
 ------------------------------------------------------------
 -- GUI CREATION
 ------------------------------------------------------------
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "LasziUI"
+gui.Name = "AltUI"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
 gui.Parent = playerGui
@@ -49,6 +50,7 @@ main.Position = UDim2.fromScale(0.5, 0.5)
 main.AnchorPoint = Vector2.new(0.5, 0.5)
 main.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
 main.BorderSizePixel = 0
+main.ClipsDescendants = true
 main.Parent = gui
 
 local mainCorner = Instance.new("UICorner")
@@ -59,6 +61,21 @@ local mainStroke = Instance.new("UIStroke")
 mainStroke.Color = Color3.fromRGB(55, 55, 65)
 mainStroke.Thickness = 1
 mainStroke.Parent = main
+
+------------------------------------------------------------
+-- MINIMIZED SQUIRCLE IMAGE LOGO
+------------------------------------------------------------
+
+local minLogo = Instance.new("ImageLabel")
+minLogo.Name = "MinLogo"
+minLogo.Size = UDim2.fromScale(0.7, 0.7)
+minLogo.Position = UDim2.fromScale(0.5, 0.5)
+minLogo.AnchorPoint = Vector2.new(0.5, 0.5)
+minLogo.BackgroundTransparency = 1
+minLogo.Image = "rbxassetid://83324832224423"
+minLogo.ScaleType = Enum.ScaleType.Fit
+minLogo.Visible = false
+minLogo.Parent = main
 
 ------------------------------------------------------------
 -- HEADER & DRAGGING
@@ -75,10 +92,10 @@ headerCorner.CornerRadius = UDim.new(0, 14)
 headerCorner.Parent = header
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -30, 1, 0)
+title.Size = UDim2.new(1, -70, 1, 0)
 title.Position = UDim2.fromOffset(15, 0)
 title.BackgroundTransparency = 1
-title.Text = "LASZI'S"
+title.Text = "laszi's"
 title.TextColor3 = Color3.fromRGB(245, 245, 250)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 17
@@ -86,47 +103,45 @@ title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 
 local subtitle = Instance.new("TextLabel")
-subtitle.Size = UDim2.new(1, -30, 0, 16)
+subtitle.Size = UDim2.new(1, -70, 0, 24)
 subtitle.Position = UDim2.fromOffset(15, 29)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = "CONTROL PANEL"
-subtitle.TextColor3 = Color3.fromRGB(110, 110, 125)
+subtitle.Text = "Premium Liquid Gold"
+subtitle.TextColor3 = Color3.fromRGB(148, 113, 39)
 subtitle.Font = Enum.Font.Gotham
 subtitle.TextSize = 9
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
 subtitle.Parent = header
 
-local dragging = false
-local dragStart
-local startPosition
+local minBtn = Instance.new("TextButton")
+minBtn.Size = UDim2.fromOffset(28, 28)
+minBtn.Position = UDim2.new(1, -38, 0, 12)
+minBtn.BackgroundColor3 = Color3.fromRGB(32, 32, 39)
+minBtn.Text = "—"
+minBtn.TextColor3 = Color3.fromRGB(200, 200, 215)
+minBtn.Font = Enum.Font.GothamBold
+minBtn.TextSize = 12
+minBtn.AutoButtonColor = false
+minBtn.BorderSizePixel = 0
+minBtn.Parent = header
 
-header.InputBegan:Connect(function(input)
-	if exited then return end
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		dragStart = input.Position
-		startPosition = main.Position
-	end
+local minBtnCorner = Instance.new("UICorner")
+minBtnCorner.CornerRadius = UDim.new(0, 7)
+minBtnCorner.Parent = minBtn
+
+local minBtnStroke = Instance.new("UIStroke")
+minBtnStroke.Color = Color3.fromRGB(55, 55, 65)
+minBtnStroke.Thickness = 1
+minBtnStroke.Parent = minBtn
+
+minBtn.MouseEnter:Connect(function()
+	if exited or minimized then return end
+	minBtn.BackgroundColor3 = Color3.fromRGB(42, 42, 51)
 end)
 
-header.InputEnded:Connect(function(input)
-	if exited then return end
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = false
-	end
-end)
-
-UIS.InputChanged:Connect(function(input)
-	if exited then return end
-	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-		local delta = input.Position - dragStart
-		main.Position = UDim2.new(
-			startPosition.X.Scale,
-			startPosition.X.Offset + delta.X,
-			startPosition.Y.Scale,
-			startPosition.Y.Offset + delta.Y
-		)
-	end
+minBtn.MouseLeave:Connect(function()
+	if exited or minimized then return end
+	minBtn.BackgroundColor3 = Color3.fromRGB(32, 32, 39)
 end)
 
 ------------------------------------------------------------
@@ -152,6 +167,139 @@ local layout = Instance.new("UIListLayout")
 layout.Padding = UDim.new(0, 10)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 layout.Parent = scroll
+
+------------------------------------------------------------
+-- BOUNDS CLAMPING
+------------------------------------------------------------
+
+local function getClampedPosition(targetSize)
+	local viewport = camera.ViewportSize
+	local screenPadding = 12
+
+	local halfW = targetSize.X / 2
+	local halfH = targetSize.Y / 2
+
+	local currentCenter = main.AbsolutePosition + (main.AbsoluteSize / 2)
+
+	local clampedX = math.clamp(currentCenter.X, halfW + screenPadding, viewport.X - halfW - screenPadding)
+	local clampedY = math.clamp(currentCenter.Y, halfH + screenPadding, viewport.Y - halfH - screenPadding)
+
+	return UDim2.fromOffset(clampedX, clampedY)
+end
+
+------------------------------------------------------------
+-- MINIMIZE / EXPAND LOGIC
+------------------------------------------------------------
+
+local function toggleMinimize()
+	if exited then return end
+	minimized = not minimized
+
+	if minimized then
+		-- Hide contents
+		scroll.Visible = false
+		header.BackgroundTransparency = 1
+		title.Visible = false
+		subtitle.Visible = false
+		minBtn.Visible = false
+
+		-- Tween to 1:1 Squircle
+		TweenService:Create(
+			main,
+			TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+			{ Size = UDim2.fromOffset(56, 56) }
+		):Play()
+
+		minLogo.Visible = true
+	else
+		minLogo.Visible = false
+
+		-- Calculate target position so expanding always fits cleanly inside screen
+		local targetPos = getClampedPosition(Vector2.new(330, 500))
+
+		-- Tween back to full size and auto-adjust position
+		local tween = TweenService:Create(
+			main,
+			TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+			{
+				Size = UDim2.fromOffset(330, 500),
+				Position = targetPos
+			}
+		)
+		tween:Play()
+
+		task.delay(0.15, function()
+			if not minimized and not exited then
+				scroll.Visible = true
+				header.BackgroundTransparency = 0
+				title.Visible = true
+				subtitle.Visible = true
+				minBtn.Visible = true
+			end
+		end)
+	end
+end
+
+minBtn.MouseButton1Click:Connect(toggleMinimize)
+
+------------------------------------------------------------
+-- DRAGGING LOGIC
+------------------------------------------------------------
+
+local dragging = false
+local dragStart
+local startPosition
+
+local function startDrag(input)
+	if exited then return end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPosition = main.Position
+	end
+end
+
+header.InputBegan:Connect(function(input)
+	if not minimized then startDrag(input) end
+end)
+
+main.InputBegan:Connect(function(input)
+	if minimized then startDrag(input) end
+end)
+
+main.InputEnded:Connect(function(input)
+	if exited then return end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 and minimized then
+		local delta = (input.Position - dragStart).Magnitude
+		if delta < 5 then
+			toggleMinimize()
+		end
+	end
+end)
+
+header.InputEnded:Connect(function(input)
+	if exited then return end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
+	end
+end)
+
+UIS.InputChanged:Connect(function(input)
+	if exited then return end
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = input.Position - dragStart
+		main.Position = UDim2.new(
+			startPosition.X.Scale,
+			startPosition.X.Offset + delta.X,
+			startPosition.Y.Scale,
+			startPosition.Y.Offset + delta.Y
+		)
+	end
+end)
+
+------------------------------------------------------------
+-- UI BUILDER HELPERS
+------------------------------------------------------------
 
 local function createSection(titleText)
 	local section = Instance.new("Frame")
@@ -404,7 +552,7 @@ flyKeyButton.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
--- AIM MECHANICS (STRICT HEAD / TORSO RESOLVER)
+-- AIM MECHANICS
 ------------------------------------------------------------
 
 local aimSection = createSection("AIM")
@@ -423,14 +571,11 @@ local function updateAimUI()
 	end
 end
 
--- Strictly returns Head or Torso part
 local function getTargetPart(char)
 	if not char then return nil end
-	
 	if Config.AimTarget == "Head" then
 		return char:FindFirstChild("Head")
 	else
-		-- Checks R15 UpperTorso, then R6 Torso, then fallback HumanoidRootPart
 		return char:FindFirstChild("UpperTorso") 
 			or char:FindFirstChild("Torso") 
 			or char:FindFirstChild("HumanoidRootPart")
@@ -511,7 +656,6 @@ end
 
 RS.RenderStepped:Connect(function()
 	if exited then return end
-	-- Locks camera ONLY if system switch is active AND right-click is actively held
 	if aimToggleState and aiming then
 		local target = getClosestTargetToCursor()
 		if target and target.Character then
@@ -640,11 +784,10 @@ UIS.InputBegan:Connect(function(input)
 		toggleFly()
 	end
 
-	-- Aim Safety Switch Key (Toggles system ON or OFF)
+	-- Aim Key
 	if input.KeyCode == Config.AimKey then
 		aimToggleState = not aimToggleState
 		if aimToggleState then
-			-- Immediately start locking if Right-Click is already being held down
 			if UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
 				aiming = true
 			end
@@ -654,7 +797,7 @@ UIS.InputBegan:Connect(function(input)
 		updateAimUI()
 	end
 
-	-- Holding Right-Click triggers active aim lock ONLY if system switch is ON
+	-- Aim Hold
 	if input.UserInputType == Enum.UserInputType.MouseButton2 and aimToggleState then
 		aiming = true
 	end
@@ -677,12 +820,10 @@ end)
 UIS.InputEnded:Connect(function(input)
 	if exited then return end
 
-	-- Releasing Right-Click stops camera locking immediately
 	if input.UserInputType == Enum.UserInputType.MouseButton2 then
 		aiming = false
 	end
 
-	-- Run Key Release
 	if input.KeyCode == Config.RunKey and Config.RunMode == "Hold" then
 		running = false
 		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
@@ -756,7 +897,5 @@ main.Size = UDim2.fromOffset(330, 0)
 TweenService:Create(
 	main,
 	TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
-	{
-		Size = UDim2.fromOffset(330, 500)
-	}
+	{ Size = UDim2.fromOffset(330, 500) }
 ):Play()
