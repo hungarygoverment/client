@@ -21,6 +21,10 @@ local Config = {
 	RunMode = "Hold", -- "Hold" or "Toggle"
 	RunSpeed = 16,
 	AimTarget = "Head", -- "Head" or "Torso"
+	AimVisibility = "Every", -- "Every" or "Only Visible"
+	AimFOV = 150, -- Maximum pixel distance from cursor for Aim ONLY
+
+	HighlightVisibility = "Every", -- "Every" or "Only Visible"
 }
 
 local highlights = {}
@@ -196,14 +200,12 @@ local function toggleMinimize()
 	minimized = not minimized
 
 	if minimized then
-		-- Hide contents
 		scroll.Visible = false
 		header.BackgroundTransparency = 1
 		title.Visible = false
 		subtitle.Visible = false
 		minBtn.Visible = false
 
-		-- Tween to 1:1 Squircle
 		TweenService:Create(
 			main,
 			TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
@@ -214,10 +216,8 @@ local function toggleMinimize()
 	else
 		minLogo.Visible = false
 
-		-- Calculate target position so expanding always fits cleanly inside screen
 		local targetPos = getClampedPosition(Vector2.new(330, 500))
 
-		-- Tween back to full size and auto-adjust position
 		local tween = TweenService:Create(
 			main,
 			TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
@@ -393,13 +393,70 @@ local function createLabel(parent, text)
 end
 
 ------------------------------------------------------------
--- HIGHLIGHT MECHANICS
+-- VISIBILITY HELPERS
 ------------------------------------------------------------
 
+local function getTargetPart(char)
+	if not char then return nil end
+	if Config.AimTarget == "Head" then
+		return char:FindFirstChild("Head")
+	else
+		return char:FindFirstChild("UpperTorso") 
+			or char:FindFirstChild("Torso") 
+			or char:FindFirstChild("HumanoidRootPart")
+	end
+end
+
+local function isPartVisible(part)
+	if not part then return false end
+
+	local origin = camera.CFrame.Position
+	local targetPos = part.Position
+	local direction = targetPos - origin
+
+	local raycastParams = RaycastParams.new()
+	raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+
+	local ignoreList = {}
+	if player.Character then
+		table.insert(ignoreList, player.Character)
+	end
+	raycastParams.FilterDescendantsInstances = ignoreList
+
+	local result = workspace:Raycast(origin, direction, raycastParams)
+
+	if result then
+		return result.Instance:IsDescendantOf(part.Parent)
+	end
+
+	return true
+end
+
+------------------------------------------------------------
+-- HIGHLIGHT MECHANICS (NO FOV LIMITS)
+------------------------------------------------------------
+
+local function checkHighlightValidity(targetPlayer)
+	if targetPlayer == player or not targetPlayer.Character then 
+		return false 
+	end
+
+	local part = getTargetPart(targetPlayer.Character)
+	if not part then 
+		return false 
+	end
+
+	-- Every Mode: Show regardless of visibility, screen position, or FOV
+	if Config.HighlightVisibility == "Every" then
+		return true
+	end
+
+	-- Only Visible Mode: Line-of-sight raycast check (NO FOV limit)
+	return isPartVisible(part)
+end
+
 local function addHighlight(targetPlayer)
-	if not highlightEnabled or exited then return end
-	if targetPlayer == player then return end
-	if not targetPlayer.Character then return end
+	if exited or not targetPlayer.Character then return end
 
 	if highlights[targetPlayer] then
 		highlights[targetPlayer]:Destroy()
@@ -421,8 +478,31 @@ local function removeHighlights()
 	end
 end
 
+local function updateHighlights()
+	if not highlightEnabled or exited then
+		removeHighlights()
+		return
+	end
+
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= player then
+			if checkHighlightValidity(p) then
+				if not highlights[p] or highlights[p].Parent ~= p.Character then
+					addHighlight(p)
+				end
+			else
+				if highlights[p] then
+					highlights[p]:Destroy()
+					highlights[p] = nil
+				end
+			end
+		end
+	end
+end
+
 local highlightSection = createSection("HIGHLIGHT")
 local highlightButton = createButton(highlightSection, "Highlight: OFF")
+local highlightVisibilityButton = createButton(highlightSection, "Highlight Visibility: EVERY")
 
 highlightButton.MouseButton1Click:Connect(function()
 	if exited then return end
@@ -431,13 +511,21 @@ highlightButton.MouseButton1Click:Connect(function()
 	if highlightEnabled then
 		highlightButton.Text = "Highlight: ON"
 		highlightButton.TextColor3 = Color3.fromRGB(80, 180, 255)
-		for _, p in ipairs(Players:GetPlayers()) do
-			addHighlight(p)
-		end
 	else
 		highlightButton.Text = "Highlight: OFF"
 		highlightButton.TextColor3 = Color3.fromRGB(225, 225, 230)
 		removeHighlights()
+	end
+end)
+
+highlightVisibilityButton.MouseButton1Click:Connect(function()
+	if exited then return end
+	if Config.HighlightVisibility == "Every" then
+		Config.HighlightVisibility = "Only Visible"
+		highlightVisibilityButton.Text = "Highlight Visibility: ONLY VISIBLE"
+	else
+		Config.HighlightVisibility = "Every"
+		highlightVisibilityButton.Text = "Highlight Visibility: EVERY"
 	end
 end)
 
@@ -552,13 +640,45 @@ flyKeyButton.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
--- AIM MECHANICS
+-- AIM MECHANICS (USES AIM FOV & VISIBILITY)
 ------------------------------------------------------------
+
+local function checkAimTargetValidity(targetPlayer)
+	if targetPlayer == player or not targetPlayer.Character then 
+		return false, nil, 0 
+	end
+
+	local part = getTargetPart(targetPlayer.Character)
+	if not part then 
+		return false, nil, 0 
+	end
+
+	local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
+	if not onScreen then 
+		return false, nil, 0 
+	end
+
+	local mousePos = UIS:GetMouseLocation()
+	local cursorDist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
+
+	-- FOV Check for Aim
+	if cursorDist > Config.AimFOV then
+		return false, nil, 0
+	end
+
+	-- Line-of-sight Check for Aim
+	if Config.AimVisibility == "Only Visible" and not isPartVisible(part) then
+		return false, nil, 0
+	end
+
+	return true, part, cursorDist
+end
 
 local aimSection = createSection("AIM")
 local aimKeyLabel = createLabel(aimSection, "Aim Toggle Key: " .. Config.AimKey.Name)
 local aimKeyButton = createButton(aimSection, "Change Aim Key")
 local aimTargetButton = createButton(aimSection, "Aim Target: HEAD")
+local aimVisibilityButton = createButton(aimSection, "Aim Visibility: EVERY")
 local aimStatus = createButton(aimSection, "Aim System: OFF")
 
 local function updateAimUI()
@@ -568,17 +688,6 @@ local function updateAimUI()
 	else
 		aimStatus.Text = "Aim System: OFF"
 		aimStatus.TextColor3 = Color3.fromRGB(225, 225, 230)
-	end
-end
-
-local function getTargetPart(char)
-	if not char then return nil end
-	if Config.AimTarget == "Head" then
-		return char:FindFirstChild("Head")
-	else
-		return char:FindFirstChild("UpperTorso") 
-			or char:FindFirstChild("Torso") 
-			or char:FindFirstChild("HumanoidRootPart")
 	end
 end
 
@@ -622,8 +731,18 @@ aimTargetButton.MouseButton1Click:Connect(function()
 	end
 end)
 
+aimVisibilityButton.MouseButton1Click:Connect(function()
+	if exited then return end
+	if Config.AimVisibility == "Every" then
+		Config.AimVisibility = "Only Visible"
+		aimVisibilityButton.Text = "Aim Visibility: ONLY VISIBLE"
+	else
+		Config.AimVisibility = "Every"
+		aimVisibilityButton.Text = "Aim Visibility: EVERY"
+	end
+end)
+
 local function getClosestTargetToCursor()
-	local mousePos = UIS:GetMouseLocation()
 	local closestPlayer = nil
 	local bestScore = math.huge
 
@@ -631,22 +750,14 @@ local function getClosestTargetToCursor()
 	if not root then return nil end
 
 	for _, p in ipairs(Players:GetPlayers()) do
-		if p ~= player and p.Character then
-			local part = getTargetPart(p.Character)
+		local valid, part, cursorDist = checkAimTargetValidity(p)
+		if valid then
+			local worldDist = (root.Position - part.Position).Magnitude
+			local score = cursorDist + (worldDist * 0.25)
 
-			if part then
-				local screenPos, onScreen = camera:WorldToViewportPoint(part.Position)
-
-				if onScreen then
-					local cursorDist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-					local worldDist = (root.Position - part.Position).Magnitude
-					local score = cursorDist + (worldDist * 0.25)
-
-					if score < bestScore then
-						bestScore = score
-						closestPlayer = p
-					end
-				end
+			if score < bestScore then
+				bestScore = score
+				closestPlayer = p
 			end
 		end
 	end
@@ -656,6 +767,13 @@ end
 
 RS.RenderStepped:Connect(function()
 	if exited then return end
+
+	-- Highlights render independently of FOV
+	if highlightEnabled then
+		updateHighlights()
+	end
+
+	-- Aim locks to nearest target within FOV
 	if aimToggleState and aiming then
 		local target = getClosestTargetToCursor()
 		if target and target.Character then
@@ -830,25 +948,6 @@ UIS.InputEnded:Connect(function(input)
 		if hum then hum.WalkSpeed = 16 end
 	end
 end)
-
-------------------------------------------------------------
--- PLAYER & RESPAWN SETUP
-------------------------------------------------------------
-
-local function setupPlayer(p)
-	p.CharacterAdded:Connect(function()
-		if exited then return end
-		task.wait(0.1)
-		if highlightEnabled then
-			addHighlight(p)
-		end
-	end)
-end
-
-for _, p in ipairs(Players:GetPlayers()) do
-	setupPlayer(p)
-end
-Players.PlayerAdded:Connect(setupPlayer)
 
 ------------------------------------------------------------
 -- EXIT / CLEANUP
