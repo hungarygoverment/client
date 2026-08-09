@@ -221,7 +221,6 @@ local function toggleMinimize()
 	minimized = not minimized
 
 	if minimized then
-		-- Save current menu position before shrinking
 		savedMenuPos = main.Position
 
 		scroll.Visible = false
@@ -231,7 +230,6 @@ local function toggleMinimize()
 		minBtn.Visible = false
 		exitButton.Visible = false
 
-		-- Animate size to squircle and position to savedSquirclePos
 		TweenService:Create(
 			main,
 			TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
@@ -243,12 +241,10 @@ local function toggleMinimize()
 
 		minLogo.Visible = true
 	else
-		-- Save current squircle position before expanding
 		savedSquirclePos = main.Position
 
 		minLogo.Visible = false
 
-		-- Animate size back to menu and position back to savedMenuPos
 		local tween = TweenService:Create(
 			main,
 			TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
@@ -328,7 +324,6 @@ UIS.InputChanged:Connect(function(input)
 		)
 		main.Position = newPos
 
-		-- Dynamically update position state depending on mode
 		if minimized then
 			savedSquirclePos = newPos
 		else
@@ -473,7 +468,7 @@ local function isPartVisible(part)
 end
 
 ------------------------------------------------------------
--- HIGHLIGHT MECHANICS (NO FOV LIMITS)
+-- HIGHLIGHT & NAMETAG MECHANICS
 ------------------------------------------------------------
 
 local function checkHighlightValidity(targetPlayer)
@@ -486,34 +481,133 @@ local function checkHighlightValidity(targetPlayer)
 		return false 
 	end
 
-	-- Every Mode: Show regardless of visibility, screen position, or FOV
 	if Config.HighlightVisibility == "Every" then
 		return true
 	end
 
-	-- Only Visible Mode: Line-of-sight raycast check (NO FOV limit)
 	return isPartVisible(part)
 end
 
 local function addHighlight(targetPlayer)
 	if exited or not targetPlayer.Character then return end
 
+	-- Clean up existing instances and connections if present
 	if highlights[targetPlayer] then
-		highlights[targetPlayer]:Destroy()
+		if highlights[targetPlayer].Conn then highlights[targetPlayer].Conn:Disconnect() end
+		if highlights[targetPlayer].Highlight then highlights[targetPlayer].Highlight:Destroy() end
+		if highlights[targetPlayer].Nametag then highlights[targetPlayer].Nametag:Destroy() end
 	end
 
+	local char = targetPlayer.Character
+	local head = char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+	local hum = char:FindFirstChildOfClass("Humanoid")
+
+	-- 1. Create Highlight Instance
 	local h = Instance.new("Highlight")
 	h.FillColor = Color3.fromRGB(255, 0, 0)
 	h.FillTransparency = 0.5
-	h.Adornee = targetPlayer.Character
-	h.Parent = targetPlayer.Character
+	h.Adornee = char
+	h.Parent = char
 
-	highlights[targetPlayer] = h
+	-- 2. Create BillboardGui (Tall enough for text + health bar)
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "ESP_NameTag"
+	billboard.Adornee = head
+	billboard.Size = UDim2.new(0, 160, 0, 45)
+	billboard.StudsOffset = Vector3.new(0, 3.8, 0) -- Height above player head
+	billboard.AlwaysOnTop = true
+	billboard.Parent = char
+
+	-- 3. Player Name Label
+	local nameLabel = Instance.new("TextLabel")
+	nameLabel.Size = UDim2.new(1, 0, 0, 20)
+	nameLabel.Position = UDim2.new(0, 0, 0, 0)
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Text = targetPlayer.DisplayName .. " (@" .. targetPlayer.Name .. ")"
+	nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	nameLabel.TextStrokeTransparency = 0
+	nameLabel.Font = Enum.Font.GothamBold
+	nameLabel.TextSize = 12
+	nameLabel.Parent = billboard
+
+	-- 4. Health Bar Background Frame
+	local healthBg = Instance.new("Frame")
+	healthBg.Size = UDim2.new(1, 0, 0, 8)
+	healthBg.Position = UDim2.new(0, 0, 0, 22)
+	healthBg.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+	healthBg.BorderSizePixel = 0
+	healthBg.Parent = billboard
+
+	local bgCorner = Instance.new("UICorner")
+	bgCorner.CornerRadius = UDim.new(0, 4)
+	bgCorner.Parent = healthBg
+
+	local bgStroke = Instance.new("UIStroke")
+	bgStroke.Color = Color3.fromRGB(10, 10, 15)
+	bgStroke.Thickness = 1
+	bgStroke.Parent = healthBg
+
+	-- 5. Active Health Fill Bar
+	local healthFill = Instance.new("Frame")
+	healthFill.Size = UDim2.fromScale(1, 1)
+	healthFill.BackgroundColor3 = Color3.fromRGB(0, 255, 120)
+	healthFill.BorderSizePixel = 0
+	healthFill.Parent = healthBg
+
+	local fillCorner = Instance.new("UICorner")
+	fillCorner.CornerRadius = UDim.new(0, 4)
+	fillCorner.Parent = healthFill
+
+	-- 6. Health Text Overlay
+	local healthText = Instance.new("TextLabel")
+	healthText.Size = UDim2.fromScale(1, 1)
+	healthText.BackgroundTransparency = 1
+	healthText.TextColor3 = Color3.fromRGB(255, 255, 255)
+	healthText.TextStrokeTransparency = 0.5
+	healthText.Font = Enum.Font.GothamSemibold
+	healthText.TextSize = 9
+	healthText.Parent = healthBg
+
+	-- Update Health Display Logic
+	local function updateHealthDisplay()
+		if not hum or hum.MaxHealth <= 0 then return end
+		local ratio = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+
+		healthFill.Size = UDim2.fromScale(ratio, 1)
+		healthText.Text = math.floor(hum.Health) .. " / " .. math.floor(hum.MaxHealth)
+
+		-- Dynamic Color: Green -> Yellow -> Red
+		if ratio > 0.5 then
+			-- Interpolate Green to Yellow
+			healthFill.BackgroundColor3 = Color3.fromRGB(0, 255, 120):Lerp(Color3.fromRGB(255, 210, 0), (1 - ratio) * 2)
+		else
+			-- Interpolate Yellow to Red
+			healthFill.BackgroundColor3 = Color3.fromRGB(255, 210, 0):Lerp(Color3.fromRGB(255, 50, 50), (0.5 - ratio) * 2)
+		end
+	end
+
+	-- Initial update & event connection
+	updateHealthDisplay()
+	local healthConn = nil
+	if hum then
+		healthConn = hum.HealthChanged:Connect(updateHealthDisplay)
+	end
+
+	-- Save tracking entry
+	highlights[targetPlayer] = {
+		Highlight = h,
+		Nametag = billboard,
+		Conn = healthConn
+	}
 end
 
 local function removeHighlights()
-	for p, h in pairs(highlights) do
-		if h then h:Destroy() end
+	for p, data in pairs(highlights) do
+		if typeof(data) == "table" then
+			if data.Conn then data.Conn:Disconnect() end
+			if data.Highlight then data.Highlight:Destroy() end
+			if data.Nametag then data.Nametag:Destroy() end
+		end
 		highlights[p] = nil
 	end
 end
@@ -527,12 +621,15 @@ local function updateHighlights()
 	for _, p in ipairs(Players:GetPlayers()) do
 		if p ~= player then
 			if checkHighlightValidity(p) then
-				if not highlights[p] or highlights[p].Parent ~= p.Character then
+				local entry = highlights[p]
+				if not entry or (entry.Highlight and entry.Highlight.Parent ~= p.Character) then
 					addHighlight(p)
 				end
 			else
 				if highlights[p] then
-					highlights[p]:Destroy()
+					if highlights[p].Conn then highlights[p].Conn:Disconnect() end
+					if highlights[p].Highlight then highlights[p].Highlight:Destroy() end
+					if highlights[p].Nametag then highlights[p].Nametag:Destroy() end
 					highlights[p] = nil
 				end
 			end
@@ -570,7 +667,7 @@ highlightVisibilityButton.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
--- FLY MECHANICS (FIXED)
+-- FLY MECHANICS
 ------------------------------------------------------------
 
 local flySection = createSection("FLY")
@@ -594,8 +691,6 @@ local function noclipOff()
 	local char = player.Character
 	if not char then return end
 	
-	-- Only re-enable collision on primary structural parts
-	-- (Limbs normally stay CanCollide = false to avoid self-collision physics bugs)
 	local mainParts = {"HumanoidRootPart", "Torso", "UpperTorso", "LowerTorso", "Head"}
 	for _, partName in ipairs(mainParts) do
 		local part = char:FindFirstChild(partName)
@@ -604,7 +699,6 @@ local function noclipOff()
 		end
 	end
 	
-	-- Force Humanoid back into normal physics state
 	local hum = char:FindFirstChildOfClass("Humanoid")
 	if hum then
 		hum:ChangeState(Enum.HumanoidStateType.GettingUp)
@@ -616,13 +710,11 @@ local function stopFly()
 	flyStatus.Text = "Fly: OFF"
 	flyStatus.TextColor3 = Color3.fromRGB(225, 225, 230)
 
-	-- Disconnect the noclip Stepped loop
 	if flyConnection then
 		flyConnection:Disconnect()
 		flyConnection = nil
 	end
 
-	-- Clean up BodyVelocity
 	local char = player.Character
 	if char and char:FindFirstChild("HumanoidRootPart") then
 		for _, obj in ipairs(char.HumanoidRootPart:GetChildren()) do
@@ -632,7 +724,6 @@ local function stopFly()
 		end
 	end
 
-	-- Restore collision and humanoid state
 	noclipOff()
 end
 
@@ -652,7 +743,6 @@ local function startFly()
 	bv.Velocity = Vector3.zero
 	bv.Parent = root
 
-	-- Use Stepped to continuously disable collision BEFORE physics calculation
 	flyConnection = RS.Stepped:Connect(function()
 		if not flying or exited then
 			stopFly()
@@ -699,7 +789,7 @@ flyKeyButton.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
--- AIM MECHANICS (USES AIM FOV & VISIBILITY)
+-- AIM MECHANICS
 ------------------------------------------------------------
 
 local function checkAimTargetValidity(targetPlayer)
@@ -720,12 +810,10 @@ local function checkAimTargetValidity(targetPlayer)
 	local mousePos = UIS:GetMouseLocation()
 	local cursorDist = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
 
-	-- FOV Check for Aim
 	if cursorDist > Config.AimFOV then
 		return false, nil, 0
 	end
 
-	-- Line-of-sight Check for Aim
 	if Config.AimVisibility == "Only Visible" and not isPartVisible(part) then
 		return false, nil, 0
 	end
@@ -827,12 +915,10 @@ end
 RS.RenderStepped:Connect(function()
 	if exited then return end
 
-	-- Highlights render independently of FOV
 	if highlightEnabled then
 		updateHighlights()
 	end
 
-	-- Aim locks to nearest target within FOV
 	if aimToggleState and aiming then
 		local target = getClosestTargetToCursor()
 		if target and target.Character then
@@ -956,12 +1042,10 @@ end)
 UIS.InputBegan:Connect(function(input)
 	if exited then return end
 
-	-- Fly Key
 	if input.KeyCode == Config.FlyKey then
 		toggleFly()
 	end
 
-	-- Aim Key
 	if input.KeyCode == Config.AimKey then
 		aimToggleState = not aimToggleState
 		if aimToggleState then
@@ -974,12 +1058,10 @@ UIS.InputBegan:Connect(function(input)
 		updateAimUI()
 	end
 
-	-- Aim Hold
 	if input.UserInputType == Enum.UserInputType.MouseButton2 and aimToggleState then
 		aiming = true
 	end
 
-	-- Run Key
 	if input.KeyCode == Config.RunKey then
 		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 		if not hum then return end
