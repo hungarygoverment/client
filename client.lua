@@ -39,7 +39,7 @@ local minimized = false
 
 -- INDEPENDENT POSITIONS
 local savedMenuPos = UDim2.fromScale(0.5, 0.5)      -- Default center for full menu
-local savedSquirclePos = UDim2.new(1, -50, 0, 50)  -- Default top-right for squircle
+local savedSquirclePos = UDim2.fromScale(0.5, 0.5)  -- Default top-right for squircle
 
 ------------------------------------------------------------
 -- GUI CREATION
@@ -106,7 +106,7 @@ title.BackgroundTransparency = 1
 title.Text = "laszi's"
 title.TextColor3 = Color3.fromRGB(245, 245, 250)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 17
+title.TextSize = 18
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = header
 
@@ -117,7 +117,7 @@ subtitle.BackgroundTransparency = 1
 subtitle.Text = "Premium Liquid Gold"
 subtitle.TextColor3 = Color3.fromRGB(148, 113, 39)
 subtitle.Font = Enum.Font.Gotham
-subtitle.TextSize = 9
+subtitle.TextSize = 12
 subtitle.TextXAlignment = Enum.TextXAlignment.Left
 subtitle.Parent = header
 
@@ -161,7 +161,7 @@ exitButton.Name = "ExitButton"
 exitButton.Size = UDim2.new(1, -20, 0, 36)
 exitButton.Position = UDim2.new(0, 10, 1, -46)
 exitButton.BackgroundColor3 = Color3.fromRGB(55, 28, 32)
-exitButton.Text = "DELETE UI / EXIT"
+exitButton.Text = "DESTROY / EXIT"
 exitButton.TextColor3 = Color3.fromRGB(225, 225, 230)
 exitButton.Font = Enum.Font.GothamSemibold
 exitButton.TextSize = 12
