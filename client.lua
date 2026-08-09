@@ -440,7 +440,11 @@ end
 aimStatus.MouseButton1Click:Connect(function()
 	if exited then return end
 	aimToggleState = not aimToggleState
-	if not aimToggleState then
+	if aimToggleState then
+		if UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+			aiming = true
+		end
+	else
 		aiming = false
 	end
 	updateAimUI()
@@ -639,7 +643,12 @@ UIS.InputBegan:Connect(function(input)
 	-- Aim Safety Switch Key (Toggles system ON or OFF)
 	if input.KeyCode == Config.AimKey then
 		aimToggleState = not aimToggleState
-		if not aimToggleState then
+		if aimToggleState then
+			-- Immediately start locking if Right-Click is already being held down
+			if UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+				aiming = true
+			end
+		else
 			aiming = false
 		end
 		updateAimUI()
