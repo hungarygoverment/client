@@ -570,13 +570,15 @@ highlightVisibilityButton.MouseButton1Click:Connect(function()
 end)
 
 ------------------------------------------------------------
--- FLY MECHANICS
+-- FLY MECHANICS (FIXED)
 ------------------------------------------------------------
 
 local flySection = createSection("FLY")
 local flyKeyLabel = createLabel(flySection, "Fly Key: " .. Config.FlyKey.Name)
 local flyKeyButton = createButton(flySection, "Change Fly Key")
 local flyStatus = createButton(flySection, "Fly: OFF")
+
+local flyConnection = nil
 
 local function noclipOn()
 	local char = player.Character
@@ -591,10 +593,21 @@ end
 local function noclipOff()
 	local char = player.Character
 	if not char then return end
-	for _, part in ipairs(char:GetDescendants()) do
-		if part:IsA("BasePart") then
+	
+	-- Only re-enable collision on primary structural parts
+	-- (Limbs normally stay CanCollide = false to avoid self-collision physics bugs)
+	local mainParts = {"HumanoidRootPart", "Torso", "UpperTorso", "LowerTorso", "Head"}
+	for _, partName in ipairs(mainParts) do
+		local part = char:FindFirstChild(partName)
+		if part and part:IsA("BasePart") then
 			part.CanCollide = true
 		end
+	end
+	
+	-- Force Humanoid back into normal physics state
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum:ChangeState(Enum.HumanoidStateType.GettingUp)
 	end
 end
 
@@ -602,8 +615,14 @@ local function stopFly()
 	flying = false
 	flyStatus.Text = "Fly: OFF"
 	flyStatus.TextColor3 = Color3.fromRGB(225, 225, 230)
-	noclipOff()
 
+	-- Disconnect the noclip Stepped loop
+	if flyConnection then
+		flyConnection:Disconnect()
+		flyConnection = nil
+	end
+
+	-- Clean up BodyVelocity
 	local char = player.Character
 	if char and char:FindFirstChild("HumanoidRootPart") then
 		for _, obj in ipairs(char.HumanoidRootPart:GetChildren()) do
@@ -612,13 +631,15 @@ local function stopFly()
 			end
 		end
 	end
+
+	-- Restore collision and humanoid state
+	noclipOff()
 end
 
 local function startFly()
 	flying = true
 	flyStatus.Text = "Fly: ON"
 	flyStatus.TextColor3 = Color3.fromRGB(80, 180, 255)
-	noclipOn()
 
 	local char = player.Character
 	if not char then return end
@@ -631,26 +652,24 @@ local function startFly()
 	bv.Velocity = Vector3.zero
 	bv.Parent = root
 
-	task.spawn(function()
-		while flying and not exited do
-			task.wait()
-			for _, part in ipairs(char:GetDescendants()) do
-				if part:IsA("BasePart") then
-					part.CanCollide = false
-				end
-			end
-
-			local move = Vector3.zero
-			if UIS:IsKeyDown(Enum.KeyCode.W) then move += root.CFrame.LookVector end
-			if UIS:IsKeyDown(Enum.KeyCode.S) then move -= root.CFrame.LookVector end
-			if UIS:IsKeyDown(Enum.KeyCode.A) then move -= root.CFrame.RightVector end
-			if UIS:IsKeyDown(Enum.KeyCode.D) then move += root.CFrame.RightVector end
-			if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
-			if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0, 1, 0) end
-
-			bv.Velocity = move * flySpeed
+	-- Use Stepped to continuously disable collision BEFORE physics calculation
+	flyConnection = RS.Stepped:Connect(function()
+		if not flying or exited then
+			stopFly()
+			return
 		end
-		bv:Destroy()
+
+		noclipOn()
+
+		local move = Vector3.zero
+		if UIS:IsKeyDown(Enum.KeyCode.W) then move += camera.CFrame.LookVector end
+		if UIS:IsKeyDown(Enum.KeyCode.S) then move -= camera.CFrame.LookVector end
+		if UIS:IsKeyDown(Enum.KeyCode.A) then move -= camera.CFrame.RightVector end
+		if UIS:IsKeyDown(Enum.KeyCode.D) then move += camera.CFrame.RightVector end
+		if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
+		if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0, 1, 0) end
+
+		bv.Velocity = move * flySpeed
 	end)
 end
 
