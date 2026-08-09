@@ -15,7 +15,7 @@ local playerGui = player:WaitForChild("PlayerGui")
 
 local Config = {
 	RunKey = Enum.KeyCode.LeftControl,
-	FlyKey = Enum.KeyCode.F,
+	FlyKey = Enum.KeyCode.Comma,
 	AimKey = Enum.KeyCode.G,
 
 	RunMode = "Hold", -- "Hold" or "Toggle"
@@ -50,17 +50,19 @@ local savedSquirclePos = UDim2.fromScale(0.5, 0.5)  -- Default position for mini
 ------------------------------------------------------------
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "LiquidGoldUI"
+gui.Name = "AltUI"
 gui.ResetOnSpawn = false
 gui.IgnoreGuiInset = true
 gui.Parent = playerGui
+task.wait(2)
 
 local main = Instance.new("Frame")
 main.Name = "MainFrame"
-main.Size = UDim2.fromOffset(360, 540)
-main.Position = savedMenuPos
+main.Size = UDim2.fromOffset(300, 450)
+main.Position = UDim2.fromScale(0.5, 0.5)
 main.AnchorPoint = Vector2.new(0.5, 0.5)
 main.BackgroundColor3 = Color3.fromRGB(13, 13, 15)
+main.BackgroundTransparency = 1
 main.BorderSizePixel = 0
 main.ClipsDescendants = true
 main.Parent = gui
@@ -74,6 +76,22 @@ mainStroke.Color = Color3.fromRGB(226, 183, 20)
 mainStroke.Transparency = 0.65
 mainStroke.Thickness = 1.5
 mainStroke.Parent = main
+
+-- GUI entrance animation
+local entranceTween = TweenService:Create(
+	main,
+	TweenInfo.new(
+		0.55,
+		Enum.EasingStyle.Quart,
+		Enum.EasingDirection.Out
+	),
+	{
+		Size = UDim2.fromOffset(360, 540),
+		BackgroundTransparency = 0
+	}
+)
+
+entranceTween:Play()
 
 ------------------------------------------------------------
 -- MINIMIZED SQUIRCLE IMAGE LOGO
@@ -127,7 +145,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -90, 0, 20)
 title.Position = UDim2.fromOffset(30, 12)
 title.BackgroundTransparency = 1
-title.Text = "LIQUID GOLD"
+title.Text = "Premium Liquid Gold"
 title.TextColor3 = Color3.fromRGB(240, 240, 245)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 14
@@ -138,7 +156,7 @@ local subtitle = Instance.new("TextLabel")
 subtitle.Size = UDim2.new(1, -90, 0, 16)
 subtitle.Position = UDim2.fromOffset(30, 30)
 subtitle.BackgroundTransparency = 1
-subtitle.Text = "PREMIUM UTILITY PANEL"
+subtitle.Text = "Script by: laszi"
 subtitle.TextColor3 = Color3.fromRGB(226, 183, 20)
 subtitle.Font = Enum.Font.GothamMedium
 subtitle.TextSize = 10
@@ -237,6 +255,8 @@ local layout = Instance.new("UIListLayout")
 layout.Padding = UDim.new(0, 12)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 layout.Parent = scroll
+
+
 
 ------------------------------------------------------------
 -- MINIMIZE / EXPAND LOGIC
@@ -789,13 +809,38 @@ end)
 ------------------------------------------------------------
 
 local flySection = createSection("Flight Capabilities")
-local flyKeyLabel = createLabel(flySection, "Fly Keybind: [" .. Config.FlyKey.Name .. "]")
-local flyKeyButton = createButton(flySection, "Change Fly Key")
-local flyStatus = createButton(flySection, "Flight System: OFF")
+
+local flyKeyLabel = createLabel(
+	flySection,
+	"Fly Keybind: [" .. Config.FlyKey.Name .. "]"
+)
+
+local flyKeyButton = createButton(
+	flySection,
+	"Change Fly Key"
+)
+
+local flyStatus = createButton(
+	flySection,
+	"Flight System: OFF"
+)
+
+local noclipEnabled = false
+
+local noclipButton = createButton(
+	flySection,
+	"Noclip: OFF"
+)
 
 local flyConnection = nil
 
+------------------------------------------------------------
+-- NOCLIP
+------------------------------------------------------------
+
 local function noclipOn()
+	if not noclipEnabled then return end
+
 	local char = player.Character
 	if not char then return end
 
@@ -810,18 +855,8 @@ local function noclipOff()
 	local char = player.Character
 	if not char then return end
 
-	local mainParts = {
-		"HumanoidRootPart",
-		"Torso",
-		"UpperTorso",
-		"LowerTorso",
-		"Head"
-	}
-
-	for _, partName in ipairs(mainParts) do
-		local part = char:FindFirstChild(partName)
-
-		if part and part:IsA("BasePart") then
+	for _, part in ipairs(char:GetDescendants()) do
+		if part:IsA("BasePart") then
 			part.CanCollide = true
 		end
 	end
@@ -832,6 +867,10 @@ local function noclipOff()
 		hum:ChangeState(Enum.HumanoidStateType.GettingUp)
 	end
 end
+
+------------------------------------------------------------
+-- FLY STOP
+------------------------------------------------------------
 
 local function stopFly()
 	flying = false
@@ -858,8 +897,15 @@ local function stopFly()
 		end
 	end
 
-	noclipOff()
+	-- Only restore collision if noclip is disabled
+	if not noclipEnabled then
+		noclipOff()
+	end
 end
+
+------------------------------------------------------------
+-- FLY START
+------------------------------------------------------------
 
 local function startFly()
 	local char = player.Character
@@ -895,7 +941,10 @@ local function startFly()
 			return
 		end
 
-		noclipOn()
+		-- Noclip only when enabled
+		if noclipEnabled then
+			noclipOn()
+		end
 
 		local move = Vector3.zero
 
@@ -931,6 +980,10 @@ local function startFly()
 	end)
 end
 
+------------------------------------------------------------
+-- FLY TOGGLE
+------------------------------------------------------------
+
 local function toggleFly()
 	if flying then
 		stopFly()
@@ -939,11 +992,41 @@ local function toggleFly()
 	end
 end
 
+------------------------------------------------------------
+-- FLY BUTTON
+------------------------------------------------------------
+
 flyStatus.MouseButton1Click:Connect(function()
 	if exited then return end
 
 	toggleFly()
 end)
+
+------------------------------------------------------------
+-- NOCLIP BUTTON
+------------------------------------------------------------
+
+noclipButton.MouseButton1Click:Connect(function()
+	if exited then return end
+
+	noclipEnabled = not noclipEnabled
+
+	if noclipEnabled then
+		noclipButton.Text = "Noclip: ON"
+		noclipButton.TextColor3 = Color3.fromRGB(226, 183, 20)
+
+		noclipOn()
+	else
+		noclipButton.Text = "Noclip: OFF"
+		noclipButton.TextColor3 = Color3.fromRGB(210, 210, 225)
+
+		noclipOff()
+	end
+end)
+
+------------------------------------------------------------
+-- CHANGE FLY KEY
+------------------------------------------------------------
 
 flyKeyButton.MouseButton1Click:Connect(function()
 	if exited then return end
@@ -961,7 +1044,9 @@ flyKeyButton.MouseButton1Click:Connect(function()
 		if input.KeyCode ~= Enum.KeyCode.Unknown then
 			Config.FlyKey = input.KeyCode
 
-			flyKeyLabel.Text = "Fly Keybind: [" .. Config.FlyKey.Name .. "]"
+			flyKeyLabel.Text =
+				"Fly Keybind: [" .. Config.FlyKey.Name .. "]"
+
 			flyKeyButton.Text = "Change Fly Key"
 
 			connection:Disconnect()
@@ -1228,35 +1313,61 @@ end)
 ------------------------------------------------------------
 
 UIS.InputBegan:Connect(function(input, gameProcessed)
-	if exited or gameProcessed then return end
+	if exited then return end
 
 	-- Fly Activation Key
 	if input.KeyCode == Config.FlyKey then
 		toggleFly()
+		return
 	end
 
 	-- Aim System Master Switch Key
 	if input.KeyCode == Config.AimKey then
 		aimToggleState = not aimToggleState
+
+		if aimToggleState then
+			-- If RMB is already being held,
+			-- immediately start aiming
+			if UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+				aiming = true
+			end
+		else
+			-- Turning aim system OFF
+			aiming = false
+		end
+
 		updateAimUI()
+		return
 	end
 
-	-- Active Aim Lock Mouse Button
+	-- Active Aim Lock
 	if input.UserInputType == Enum.UserInputType.MouseButton2 then
 		if aimToggleState then
 			aiming = true
 		end
+
+		return
 	end
+
+	if gameProcessed then return end
 
 	-- Run Activation Key
 	if input.KeyCode == Config.RunKey then
-		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		local hum = player.Character
+			and player.Character:FindFirstChildOfClass("Humanoid")
+
 		if Config.RunMode == "Hold" then
 			running = true
-			if hum then hum.WalkSpeed = Config.RunSpeed end
+
+			if hum then
+				hum.WalkSpeed = Config.RunSpeed
+			end
 		else
 			running = not running
-			if hum then hum.WalkSpeed = running and Config.RunSpeed or 16 end
+
+			if hum then
+				hum.WalkSpeed = running and Config.RunSpeed or 16
+			end
 		end
 	end
 end)
@@ -1264,14 +1375,23 @@ end)
 UIS.InputEnded:Connect(function(input)
 	if exited then return end
 
+	-- Release RMB = stop aim lock
 	if input.UserInputType == Enum.UserInputType.MouseButton2 then
 		aiming = false
 	end
 
-	if input.KeyCode == Config.RunKey and Config.RunMode == "Hold" then
+	-- Release Run key
+	if input.KeyCode == Config.RunKey
+		and Config.RunMode == "Hold" then
+
 		running = false
-		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-		if hum then hum.WalkSpeed = 16 end
+
+		local hum = player.Character
+			and player.Character:FindFirstChildOfClass("Humanoid")
+
+		if hum then
+			hum.WalkSpeed = 16
+		end
 	end
 end)
 
