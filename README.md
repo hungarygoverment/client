@@ -4,9 +4,6 @@
 
 **A feature-rich, high-performance Roblox Lua script hub.**
 
-[![Lua](https://img.shields.io/badge/Language-Lua-000080?style=flat-square&logo=lua)](https://www.lua.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
-
 </div>
 
 ---
