@@ -1,4 +1,4 @@
--- LocalScript (StarterPlayerScripts / Client Engine)
+-- Single Unified LocalScript: Liquid Gold Hub (Loader + Main Engine)
 
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
@@ -11,7 +11,192 @@ local camera = workspace.CurrentCamera
 local playerGui = player:WaitForChild("PlayerGui")
 
 ------------------------------------------------------------
--- CONFIGURATION & GLOBAL STATE
+--LOADER
+------------------------------------------------------------
+
+local loadGui = Instance.new("ScreenGui")
+loadGui.Name = "Loader"
+loadGui.ResetOnSpawn = false
+loadGui.IgnoreGuiInset = true
+loadGui.Parent = playerGui
+
+local loadFrame = Instance.new("Frame")
+loadFrame.Name = "LoaderFrame"
+loadFrame.Size = UDim2.fromOffset(290, 160)
+loadFrame.Position = UDim2.fromScale(0.5, 0.5)
+loadFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+loadFrame.BackgroundColor3 = Color3.fromRGB(13, 13, 15)
+loadFrame.BackgroundTransparency = 1
+loadFrame.BorderSizePixel = 0
+loadFrame.ClipsDescendants = true
+loadFrame.Parent = loadGui
+
+local loadCorner = Instance.new("UICorner")
+loadCorner.CornerRadius = UDim.new(0, 14)
+loadCorner.Parent = loadFrame
+
+local loadStroke = Instance.new("UIStroke")
+loadStroke.Color = Color3.fromRGB(226, 183, 20)
+loadStroke.Transparency = 1
+loadStroke.Thickness = 1.5
+loadStroke.Parent = loadFrame
+
+local loadTitle = Instance.new("TextLabel")
+loadTitle.Size = UDim2.new(1, -40, 0, 24)
+loadTitle.Position = UDim2.fromOffset(20, 22)
+loadTitle.BackgroundTransparency = 1
+loadTitle.Text = "Premium Liquid Gold"
+loadTitle.TextColor3 = Color3.fromRGB(240, 240, 245)
+loadTitle.Font = Enum.Font.GothamBold
+loadTitle.TextSize = 18
+loadTitle.TextXAlignment = Enum.TextXAlignment.Center
+loadTitle.Parent = loadFrame
+
+local loadSubtitle = Instance.new("TextLabel")
+loadSubtitle.Size = UDim2.new(1, -40, 0, 16)
+loadSubtitle.Position = UDim2.fromOffset(20, 46)
+loadSubtitle.BackgroundTransparency = 1
+loadSubtitle.Text = "Script by: laszi"
+loadSubtitle.TextColor3 = Color3.fromRGB(226, 183, 20)
+loadSubtitle.Font = Enum.Font.GothamMedium
+loadSubtitle.TextSize = 11
+loadSubtitle.TextXAlignment = Enum.TextXAlignment.Center
+loadSubtitle.Parent = loadFrame
+
+local statusLabel = Instance.new("TextLabel")
+statusLabel.Size = UDim2.new(1, -90, 0, 16)
+statusLabel.Position = UDim2.fromOffset(20, 92)
+statusLabel.BackgroundTransparency = 1
+statusLabel.Text = "Loading modules..."
+statusLabel.TextColor3 = Color3.fromRGB(170, 170, 185)
+statusLabel.Font = Enum.Font.GothamMedium
+statusLabel.TextSize = 11
+statusLabel.TextXAlignment = Enum.TextXAlignment.Left
+statusLabel.Parent = loadFrame
+
+local percentLabel = Instance.new("TextLabel")
+percentLabel.Size = UDim2.new(0, 60, 0, 16)
+percentLabel.Position = UDim2.new(1, -80, 0, 92)
+percentLabel.BackgroundTransparency = 1
+percentLabel.Text = "0%"
+percentLabel.TextColor3 = Color3.fromRGB(226, 183, 20)
+percentLabel.Font = Enum.Font.GothamBold
+percentLabel.TextSize = 11
+percentLabel.TextXAlignment = Enum.TextXAlignment.Right
+percentLabel.Parent = loadFrame
+
+local barBg = Instance.new("Frame")
+barBg.Size = UDim2.new(1, -40, 0, 6)
+barBg.Position = UDim2.fromOffset(20, 116)
+barBg.BackgroundColor3 = Color3.fromRGB(24, 24, 30)
+barBg.BorderSizePixel = 0
+barBg.Parent = loadFrame
+
+local barBgCorner = Instance.new("UICorner")
+barBgCorner.CornerRadius = UDim.new(1, 0)
+barBgCorner.Parent = barBg
+
+local barFill = Instance.new("Frame")
+barFill.Size = UDim2.new(0, 0, 1, 0)
+barFill.BackgroundColor3 = Color3.fromRGB(226, 183, 20)
+barFill.BorderSizePixel = 0
+barFill.Parent = barBg
+
+local barFillCorner = Instance.new("UICorner")
+barFillCorner.CornerRadius = UDim.new(1, 0)
+barFillCorner.Parent = barFill
+
+------------------------------------------------------------
+-- ANIMATION SEQUENCE WITH VARIABLE TIMING
+------------------------------------------------------------
+
+-- Entrance Fade & Scale
+TweenService:Create(
+	loadFrame,
+	TweenInfo.new(0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+	{ 
+		Size = UDim2.fromOffset(320, 180),
+		BackgroundTransparency = 0 
+	}
+):Play()
+
+TweenService:Create(
+	loadStroke,
+	TweenInfo.new(0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+	{ Transparency = 0.65 }
+):Play()
+
+task.wait(2)
+local steps = {
+	{ progress = 0.25, status = "Connecting services...", duration = 1, pause = 0.25 },
+	{ progress = 0.55, status = "Loading UI elements...",  duration = .6, pause = 0.1 },
+	{ progress = 0.85, status = "Verifying permissions...", duration = 3, pause = 0.1 },
+	{ progress = 1.00, status = "System Ready! Welcome",   duration = 0.3, pause = .7 },
+}
+
+local currentPercent = 0
+
+for _, step in ipairs(steps) do
+	statusLabel.Text = step.status
+	
+	local targetPercent = math.floor(step.progress * 100)
+	local fillTween = TweenService:Create(
+		barFill,
+		TweenInfo.new(step.duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{ Size = UDim2.fromScale(step.progress, 1) }
+	)
+	
+	fillTween:Play()
+
+	-- Dynamic numeric counter matching step duration
+	local startTime = os.clock()
+	local startPercent = currentPercent
+
+	local countConnection
+	countConnection = RS.RenderStepped:Connect(function()
+		local elapsed = os.clock() - startTime
+		local alpha = math.clamp(elapsed / step.duration, 0, 1)
+		currentPercent = math.floor(startPercent + (targetPercent - startPercent) * alpha)
+		percentLabel.Text = currentPercent .. "%"
+
+		if alpha >= 1 then
+			countConnection:Disconnect()
+		end
+	end)
+
+	fillTween.Completed:Wait()
+	if countConnection then countConnection:Disconnect() end
+	percentLabel.Text = targetPercent .. "%"
+	currentPercent = targetPercent
+
+	-- Step-specific hold pause
+	task.wait(step.pause)
+end
+
+task.wait(0.2)
+
+-- Exit Animation
+local exitTween = TweenService:Create(
+	loadFrame,
+	TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
+	{
+		Size = UDim2.fromOffset(280, 140),
+		BackgroundTransparency = 1
+	}
+)
+
+TweenService:Create(
+	loadStroke,
+	TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
+	{ Transparency = 1 }
+):Play()
+
+exitTween:Play()
+exitTween.Completed:Wait()
+loadGui:Destroy()
+
+------------------------------------------------------------
+-- MAIN HUB
 ------------------------------------------------------------
 
 local Config = {
@@ -25,7 +210,7 @@ local Config = {
 	AimTarget = "Head",          -- "Head" or "Torso"
 	AimVisibility = "Every",     -- "Every" or "Only Visible"
 	AimFOV = 150,                -- Maximum pixel radius from cursor
-	AimSmoothing = 1,            -- 1 = Instant Snap, lower (e.g. 0.2) = Smooth Lerp
+	AimSmoothing = 1,            -- 1 = Instant Snap, lower = Smooth Lerp
 
 	-- Movement
 	RunMode = "Hold",            -- "Hold" or "Toggle"
@@ -38,7 +223,7 @@ local Config = {
 	ShowNames = true,
 	ShowHealth = true,
 	HighlightVisibility = "Every", -- "Every" or "Only Visible"
-	HighlightColor = Color3.fromRGB(226, 183, 20), -- Default Gold
+	HighlightColor = Color3.fromRGB(226, 183, 20), -- Gold
 	RainbowESP = false,
 
 	-- World / Environment
@@ -70,12 +255,11 @@ local colorPresets = {
 }
 local currentColorIdx = 1
 
--- Independent Position Tracker for Minimize State
 local savedMenuPos = UDim2.fromScale(0.5, 0.5)
 local savedSquirclePos = UDim2.fromScale(0.5, 0.5)
 
 ------------------------------------------------------------
--- LIGHTING BACKUP & ENVIRONMENT MANAGERS
+-- LIGHTING ENVIRONMENT MANAGERS
 ------------------------------------------------------------
 
 local defaultLighting = {
@@ -132,7 +316,7 @@ local function applyRemoveFog()
 end
 
 ------------------------------------------------------------
--- GUI CREATION (LUXURY DARK THEME)
+-- MAIN HUB GUI BUILD
 ------------------------------------------------------------
 
 local gui = Instance.new("ScreenGui")
@@ -979,7 +1163,7 @@ clickTpBtn.MouseButton1Click:Connect(function()
 	clickTpBtn.TextColor3 = Config.ClickTP and Color3.fromRGB(226, 183, 20) or Color3.fromRGB(210, 210, 225)
 end)
 
--- Infinite Jump Request
+-- Infinite Jump Listener
 table.insert(connections, UIS.JumpRequest:Connect(function()
 	if Config.InfJump and not exited then
 		local char = player.Character
@@ -1057,7 +1241,7 @@ local function startFly()
 	flyConnection = RS.Stepped:Connect(function()
 		if not flying or exited or not root.Parent then stopFly() return end
 
-		-- Noclip applied strictly when active during flight
+		-- Phasing through obstacles strictly while active during flight
 		if flyNoclip and player.Character then
 			for _, part in ipairs(player.Character:GetDescendants()) do
 				if part:IsA("BasePart") then part.CanCollide = false end
@@ -1090,7 +1274,7 @@ noclipButton.MouseButton1Click:Connect(function()
 	noclipButton.Text = flyNoclip and "Fly Noclip: ON" or "Fly Noclip: OFF"
 	noclipButton.TextColor3 = flyNoclip and Color3.fromRGB(226, 183, 20) or Color3.fromRGB(210, 210, 225)
 	
-	-- Restore collisions immediately if Noclip is turned off mid-flight
+	-- Instant collision restoration if turned off mid-flight
 	if not flyNoclip and flying then
 		resetCollisions()
 	end
@@ -1167,13 +1351,13 @@ table.insert(connections, UIS.InputBegan:Connect(function(input, gpe)
 		return
 	end
 
-	-- RMB Aim
+	-- RMB Aim Lock
 	if input.UserInputType == Enum.UserInputType.MouseButton2 and aimToggleState then
 		aiming = true
 		return
 	end
 
-	-- Speed Run
+	-- Speed Run Key
 	if input.KeyCode == Config.RunKey then
 		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 		if Config.RunMode == "Hold" then
@@ -1205,7 +1389,7 @@ local hue = 0
 table.insert(connections, RS.RenderStepped:Connect(function(dt)
 	if exited then return end
 
-	-- Rainbow Spectrum Cycle
+	-- Rainbow Color Cycle
 	if Config.RainbowESP then
 		hue = (hue + (dt * 0.2)) % 1
 		Config.HighlightColor = Color3.fromHSV(hue, 1, 1)
@@ -1218,16 +1402,16 @@ table.insert(connections, RS.RenderStepped:Connect(function(dt)
 		end
 	end
 
-	-- Update ESP Positions
+	-- Update ESP Displays
 	updateHighlights()
 
-	-- FOV Circle Follow
+	-- FOV Circle Position Follow
 	if fovCircle and aimToggleState then
 		local mousePos = UIS:GetMouseLocation()
 		fovCircle.Position = UDim2.fromOffset(mousePos.X, mousePos.Y)
 	end
 
-	-- Aimbot Camera Lock
+	-- Aimbot Lock Execution
 	if aimToggleState and aiming then
 		local target = getClosestTargetToCursor()
 		if target and target.Character then
@@ -1269,7 +1453,7 @@ exitButton.MouseButton1Click:Connect(function()
 		if conn then conn:Disconnect() end
 	end
 
-	-- Restore Game / Character States
+	-- Restore Character & Environment States
 	stopFly()
 	removeHighlights()
 	Config.Fullbright = false
@@ -1280,8 +1464,8 @@ exitButton.MouseButton1Click:Connect(function()
 	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 	if hum then hum.WalkSpeed = 16 end
 
-	-- Animate UI Exit and Destroy
-	local exitTween = TweenService:Create(
+	-- Animate UI Removal
+	local exitMainTween = TweenService:Create(
 		main,
 		TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
 		{
@@ -1289,8 +1473,8 @@ exitButton.MouseButton1Click:Connect(function()
 			BackgroundTransparency = 1
 		}
 	)
-	exitTween:Play()
-	exitTween.Completed:Connect(function()
+	exitMainTween:Play()
+	exitMainTween.Completed:Connect(function()
 		gui:Destroy()
 	end)
 end)
