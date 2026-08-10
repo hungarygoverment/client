@@ -9,7 +9,7 @@
 ---
 
 ### Combat
-* **Smart Aimbot:** Lock onto `Head` or `Torso` with wall-checking (raycast line-of-sight).
+* **Aimbot:** Lock onto `Head` or `Torso` with wall-checking (raycast line-of-sight).
 * **FOV Circle:** Customizable on-screen target radius.
 
 ### Visuals (ESP)
