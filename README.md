@@ -22,12 +22,12 @@
 
 ## Features
 
-### 🎯 Combat & Precision Aiming
+### Combat & Precision Aiming
 - **Raycast Visibility Engine:** Filters targets based on obstruction line-of-sight.
 - **Configurable Lock:** Toggle targeting between `Head` or `Torso`.
 - **Dynamic FOV Indicator:** On-screen gold targeting radius overlay.
   
-### 👁️ Visuals & Custom ESP
+### Visuals & Custom ESP
 - **Chams (Glow):** Highlights enemy character models through geometry with visible-only mode.
 - **Adaptive Health Tracking:** Dynamic color-shifting health bars (`Green` ➔ `Yellow` ➔ `Red`).
 - **Target Billboards:** High-visibility display names and usernames.
@@ -43,16 +43,16 @@
 - **3D Aerial Flight Engine:** Camera-relative directional movement (`WASD` + `Space`/`Shift`).
 - **Noclip Phasing:** Toggle collision bypass while flying.
 
-### ☀️ Enviromental overrides locally
+### Enviromental overrides locally
 - **Fullbright:** Overrides ambient light and shadows for maximum clarity.
 - **Fog Eraser:** Instantly wipes atmosphere particles and fog distance limits.
 
-### 🛡️ Clean Terminate & Memory Recovery
+### Clean Terminate & Memory Recovery
 - **1-Click Safety Unload:** Disconnects all active event connections (`RenderStepped`, `InputBegan`), destroys GUI instances, resets physics collisions, and restores default game environment lighting.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 To execute **Premium Liquid Gold** into your game client, use Xeno executor for the smoothest experience and paste in the string to the executor after attaching:
 
