@@ -2,7 +2,7 @@
 
 # ⚜️ Premium Liquid Gold
 
-**A feature-rich, high-performance Roblox Lua script hub.**
+**A feature-rich, high-performance Roblox Lua script.**
 
 </div>
 
