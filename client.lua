@@ -1,3 +1,5 @@
+-- Single Unified LocalScript: Liquid Gold Hub (Loader + Main Engine)
+
 local Players = game:GetService("Players")
 local UIS = game:GetService("UserInputService")
 local RS = game:GetService("RunService")
@@ -104,6 +106,11 @@ local barFillCorner = Instance.new("UICorner")
 barFillCorner.CornerRadius = UDim.new(1, 0)
 barFillCorner.Parent = barFill
 
+------------------------------------------------------------
+-- ANIMATION SEQUENCE WITH VARIABLE TIMING
+------------------------------------------------------------
+
+-- Entrance Fade & Scale
 TweenService:Create(
 	loadFrame,
 	TweenInfo.new(0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
@@ -141,6 +148,7 @@ for _, step in ipairs(steps) do
 	
 	fillTween:Play()
 
+	-- Dynamic numeric counter matching step duration
 	local startTime = os.clock()
 	local startPercent = currentPercent
 
@@ -160,12 +168,14 @@ for _, step in ipairs(steps) do
 	if countConnection then countConnection:Disconnect() end
 	percentLabel.Text = targetPercent .. "%"
 	currentPercent = targetPercent
-	
+
+	-- Step-specific hold pause
 	task.wait(step.pause)
 end
 
 task.wait(0.2)
 
+-- Exit Animation
 local exitTween = TweenService:Create(
 	loadFrame,
 	TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
@@ -336,6 +346,7 @@ mainStroke.Transparency = 0.65
 mainStroke.Thickness = 1.5
 mainStroke.Parent = main
 
+-- Dynamic FOV Circle UI
 local fovCircle = Instance.new("Frame")
 fovCircle.Name = "FOVCircle"
 fovCircle.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -354,6 +365,7 @@ fovStroke.Transparency = 0.4
 fovStroke.Thickness = 1.5
 fovStroke.Parent = fovCircle
 
+-- Opening Animation
 TweenService:Create(
 	main,
 	TweenInfo.new(0.55, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
@@ -363,6 +375,7 @@ TweenService:Create(
 	}
 ):Play()
 
+-- Minimized Logo Squircle
 local minLogo = Instance.new("ImageLabel")
 minLogo.Name = "MinLogo"
 minLogo.Size = UDim2.fromScale(0.65, 0.65)
@@ -374,6 +387,7 @@ minLogo.ScaleType = Enum.ScaleType.Fit
 minLogo.Visible = false
 minLogo.Parent = main
 
+-- Header
 local header = Instance.new("Frame")
 header.Name = "Header"
 header.Size = UDim2.new(1, 0, 0, 58)
@@ -446,6 +460,7 @@ minBtnStroke.Color = Color3.fromRGB(40, 40, 50)
 minBtnStroke.Thickness = 1
 minBtnStroke.Parent = minBtn
 
+-- Exit / Terminate Button
 local exitButton = Instance.new("TextButton")
 exitButton.Name = "ExitButton"
 exitButton.Size = UDim2.new(1, -28, 0, 38)
@@ -468,6 +483,7 @@ exitStroke.Color = Color3.fromRGB(70, 25, 35)
 exitStroke.Thickness = 1
 exitStroke.Parent = exitButton
 
+-- Scroll Area
 local scroll = Instance.new("ScrollingFrame")
 scroll.Size = UDim2.new(1, -20, 1, -122)
 scroll.Position = UDim2.fromOffset(10, 64)
@@ -1147,6 +1163,7 @@ clickTpBtn.MouseButton1Click:Connect(function()
 	clickTpBtn.TextColor3 = Config.ClickTP and Color3.fromRGB(226, 183, 20) or Color3.fromRGB(210, 210, 225)
 end)
 
+-- Infinite Jump Listener
 table.insert(connections, UIS.JumpRequest:Connect(function()
 	if Config.InfJump and not exited then
 		local char = player.Character
@@ -1323,8 +1340,10 @@ table.insert(connections, UIS.InputBegan:Connect(function(input, gpe)
 
 	if gpe then return end
 
+	-- Fly Key
 	if input.KeyCode == Config.FlyKey then toggleFly() return end
 
+	-- Aim Key
 	if input.KeyCode == Config.AimKey then
 		aimToggleState = not aimToggleState
 		aiming = aimToggleState and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
@@ -1332,11 +1351,13 @@ table.insert(connections, UIS.InputBegan:Connect(function(input, gpe)
 		return
 	end
 
+	-- RMB Aim Lock
 	if input.UserInputType == Enum.UserInputType.MouseButton2 and aimToggleState then
 		aiming = true
 		return
 	end
 
+	-- Speed Run Key
 	if input.KeyCode == Config.RunKey then
 		local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 		if Config.RunMode == "Hold" then
@@ -1368,24 +1389,29 @@ local hue = 0
 table.insert(connections, RS.RenderStepped:Connect(function(dt)
 	if exited then return end
 
+	-- Rainbow Color Cycle
 	if Config.RainbowESP then
 		hue = (hue + (dt * 0.2)) % 1
 		Config.HighlightColor = Color3.fromHSV(hue, 1, 1)
 	end
 
+	-- Dynamically Update Highlight Colors
 	for _, data in pairs(highlights) do
 		if typeof(data) == "table" and data.Highlight then
 			data.Highlight.FillColor = Config.HighlightColor
 		end
 	end
 
+	-- Update ESP Displays
 	updateHighlights()
 
+	-- FOV Circle Position Follow
 	if fovCircle and aimToggleState then
 		local mousePos = UIS:GetMouseLocation()
 		fovCircle.Position = UDim2.fromOffset(mousePos.X, mousePos.Y)
 	end
 
+	-- Aimbot Lock Execution
 	if aimToggleState and aiming then
 		local target = getClosestTargetToCursor()
 		if target and target.Character then
@@ -1422,10 +1448,12 @@ exitButton.MouseButton1Click:Connect(function()
 	if exited then return end
 	exited = true
 
+	-- Disconnect Event Handlers
 	for _, conn in ipairs(connections) do
 		if conn then conn:Disconnect() end
 	end
 
+	-- Restore Character & Environment States
 	stopFly()
 	removeHighlights()
 	Config.Fullbright = false
@@ -1436,6 +1464,7 @@ exitButton.MouseButton1Click:Connect(function()
 	local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
 	if hum then hum.WalkSpeed = 16 end
 
+	-- Animate UI Removal
 	local exitMainTween = TweenService:Create(
 		main,
 		TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
