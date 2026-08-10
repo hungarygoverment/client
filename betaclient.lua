@@ -50,7 +50,7 @@ local highlights = {}
 local connections = {}
 local highlightEnabled = false
 local flying = false
-local noclipEnabled = false
+local flyNoclip = false          -- Option: Phasing through walls while flying
 local flySpeed = 60
 local aimToggleState = false
 local aiming = false
@@ -996,21 +996,10 @@ local flySection = createSection("Flight Capabilities")
 local flyKeyLabel = createLabel(flySection, "Fly Keybind: [" .. Config.FlyKey.Name .. "]")
 local flyKeyButton = createButton(flySection, "Change Fly Key")
 local flyStatus = createButton(flySection, "Flight System: OFF")
-local noclipButton = createButton(flySection, "Noclip: OFF")
+local noclipButton = createButton(flySection, "Fly Noclip: OFF")
 local flyConnection = nil
 
--- Noclip Loop: Runs continuously on Stepped when Noclip is ON
-table.insert(connections, RS.Stepped:Connect(function()
-	if noclipEnabled and not exited and player.Character then
-		for _, part in ipairs(player.Character:GetDescendants()) do
-			if part:IsA("BasePart") then
-				part.CanCollide = false
-			end
-		end
-	end
-end))
-
-local function noclipOff()
+local function resetCollisions()
 	local char = player.Character
 	if not char then return end
 	for _, part in ipairs(char:GetDescendants()) do
@@ -1038,7 +1027,7 @@ local function stopFly()
 		end
 		if hum then hum.PlatformStand = false end
 	end
-	if not noclipEnabled then noclipOff() end
+	resetCollisions()
 end
 
 local function startFly()
@@ -1068,6 +1057,13 @@ local function startFly()
 	flyConnection = RS.Stepped:Connect(function()
 		if not flying or exited or not root.Parent then stopFly() return end
 
+		-- Noclip applied strictly when active during flight
+		if flyNoclip and player.Character then
+			for _, part in ipairs(player.Character:GetDescendants()) do
+				if part:IsA("BasePart") then part.CanCollide = false end
+			end
+		end
+
 		local move = Vector3.zero
 		if UIS:IsKeyDown(Enum.KeyCode.W) then move += camera.CFrame.LookVector end
 		if UIS:IsKeyDown(Enum.KeyCode.S) then move -= camera.CFrame.LookVector end
@@ -1090,10 +1086,14 @@ flyStatus.MouseButton1Click:Connect(function() if not exited then toggleFly() en
 
 noclipButton.MouseButton1Click:Connect(function()
 	if exited then return end
-	noclipEnabled = not noclipEnabled
-	noclipButton.Text = noclipEnabled and "Noclip: ON" or "Noclip: OFF"
-	noclipButton.TextColor3 = noclipEnabled and Color3.fromRGB(226, 183, 20) or Color3.fromRGB(210, 210, 225)
-	if not noclipEnabled then noclipOff() end
+	flyNoclip = not flyNoclip
+	noclipButton.Text = flyNoclip and "Fly Noclip: ON" or "Fly Noclip: OFF"
+	noclipButton.TextColor3 = flyNoclip and Color3.fromRGB(226, 183, 20) or Color3.fromRGB(210, 210, 225)
+	
+	-- Restore collisions immediately if Noclip is turned off mid-flight
+	if not flyNoclip and flying then
+		resetCollisions()
+	end
 end)
 
 flyKeyButton.MouseButton1Click:Connect(function()
