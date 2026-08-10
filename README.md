@@ -39,4 +39,4 @@
 Recommended Executor: **Xeno**
 
 ```lua
-loadstring(game:HttpGet("[https://raw.githubusercontent.com/laszis/premiumliquidgold/main/client.lua](https://raw.githubusercontent.com/laszis/premiumliquidgold/main/client.lua)"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/laszis/premiumliquidgold/main/client.lua"))() 
