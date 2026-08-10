@@ -2,59 +2,44 @@
 
 # ⚜️ Premium Liquid Gold
 
-**The Gold Standard in Roblox Execution Suites & Interface Design.**
+**A feature-rich, high-performance Roblox Lua script hub.**
 
-![Language](https://img.shields.io/badge/Language-Lua-blue?style=for-the-badge&logo=lua)
-![License](https://img.shields.io/badge/License-MIT-gold?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)
-
-*A lightweight, unified LocalScript with a luxury feature-rich hub.*
+[![Lua](https://img.shields.io/badge/Language-Lua-000080?style=flat-square&logo=lua)](https://www.lua.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
 </div>
 
 ---
 
-## Overview
+## ⚡ Overview
+**Premium Liquid Gold** is a lightweight Roblox script hub designed for smooth performance, zero frame drops, and easy execution. Built with clean memory management to ensure it unloads completely without leaving leftover connections.
 
-**Premium Liquid Gold** is engineered to combine gold-plated aesthetics with raw execution performance. Designed with zero-frame-drop UI rendering, raycast occlusion checks, dynamic FOV indicators, and clean memory handling, it sets a new benchmark for interface utility.
+## 🛠️ Feature List
 
----
+### 🎯 Combat
+* **Smart Aimbot:** Lock onto `Head` or `Torso` with wall-checking (raycast line-of-sight).
+* **FOV Circle:** Customizable on-screen target radius.
 
-## Features
+### 👁️ Visuals (ESP)
+* **Wall-Glow Chams:** Highlight players through objects.
+* **Health Trackers:** Dynamic color-changing health bars.
+* **Player Info:** Overhead billboards for display names and usernames.
+* **Themes:** Multiple color presets plus a dynamic Rainbow RGB mode.
 
-### Combat & Precision Aiming
-- **Raycast Visibility Engine:** Filters targets based on obstruction line-of-sight.
-- **Configurable Lock:** Toggle targeting between `Head` or `Torso`.
-- **Dynamic FOV Indicator:** On-screen gold targeting radius overlay.
-  
-### Visuals & Custom ESP
-- **Chams (Glow):** Highlights enemy character models through geometry with visible-only mode.
-- **Adaptive Health Tracking:** Dynamic color-shifting health bars (`Green` ➔ `Yellow` ➔ `Red`).
-- **Target Billboards:** High-visibility display names and usernames.
-- **Color Engine:** Switchable presets (`Gold`, `Cyan`, `Red`, `Green`, `Purple`, `White`) plus live **Rainbow RGB** cycling.
+### 🏃 Movement & Flight
+* **Custom Speed:** Adjustable WalkSpeed slider (1-100) with keybind options.
+* **Click Teleport:** Hold `Left Alt` + Left Click to teleport instantly.
+* **Flight Engine:** 3D flying tied to camera orientation + built-in Noclip.
+* **Infinite Jump:** Jump repeatedly in mid-air.
 
-### Mobility & Movement
-- **Interactive Speed Slider:** Real-time WalkSpeed adjustments (1 to 100).
-- **Flex-Input Modes:** Toggle or Hold modes for speed keybinds.
-- **Click-To-TP:** Hold `Left Alt` + Click to teleport directly to world surfaces.
-- **Infinite Jump:** Continuous airborne jump capability.
-
-### Flight Control
-- **3D Aerial Flight Engine:** Camera-relative directional movement (`WASD` + `Space`/`Shift`).
-- **Noclip Phasing:** Toggle collision bypass while flying.
-
-### Enviromental overrides locally
-- **Fullbright:** Overrides ambient light and shadows for maximum clarity.
-- **Fog Eraser:** Instantly wipes atmosphere particles and fog distance limits.
-
-### Clean Terminate & Memory Recovery
-- **1-Click Safety Unload:** Disconnects all active event connections (`RenderStepped`, `InputBegan`), destroys GUI instances, resets physics collisions, and restores default game environment lighting.
+### 🌆 Lighting
+* **World Overrides:** Instantly enable Fullbright or clear atmosphere fog.
 
 ---
 
-## Quick Start
+## 🚀 Execution
 
-To execute **Premium Liquid Gold** into your game client, use Xeno.now executor for the smoothest experience and paste in the string to the executor after attaching:
+Recommended Executor: **Xeno**
 
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/laszis/premiumliquidgold/main/client.lua"))()
+loadstring(game:HttpGet("[https://raw.githubusercontent.com/laszis/premiumliquidgold/main/client.lua](https://raw.githubusercontent.com/laszis/premiumliquidgold/main/client.lua)"))()
