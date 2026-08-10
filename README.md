@@ -32,14 +32,11 @@
 * **Fullbright Override:** Disables map shadows, overrides ambient lighting values, and forces global illumination for total darkness visibility.
 * **Fog Eraser:** Clears atmosphere particles, density fog, and map blur parameters to maximize rendering distance and clarity.
 
-### 🛡️ Safety & Lifecycle Management
-* **Complete Memory Unload:** Safely terminates the script with a single click by disconnecting all active render loops (`RenderStepped`, `Stepped`, `Heartbeat`), destroying all instances, clearing keybind listeners, and restoring default game lighting.
-
 ---
 
 
 ## 🚀 Execution
-* Recommended Executor: **Xeno**
+* Recommended Executor: **Xeno.now**
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/laszis/premiumliquidgold/main/client.lua"))()  
 
