@@ -33,13 +33,13 @@
 - **Target Billboards:** High-visibility display names and usernames.
 - **Color Engine:** Switchable presets (`Gold`, `Cyan`, `Red`, `Green`, `Purple`, `White`) plus live **Rainbow RGB** cycling.
 
-### ⚡ Mobility & Movement
+### Mobility & Movement
 - **Interactive Speed Slider:** Real-time WalkSpeed adjustments (1 to 100).
 - **Flex-Input Modes:** Toggle or Hold modes for speed keybinds.
 - **Click-To-TP:** Hold `Left Alt` + Click to teleport directly to world surfaces.
 - **Infinite Jump:** Continuous airborne jump capability.
 
-### ✈️ Flight Control
+### Flight Control
 - **3D Aerial Flight Engine:** Camera-relative directional movement (`WASD` + `Space`/`Shift`).
 - **Noclip Phasing:** Toggle collision bypass while flying.
 
