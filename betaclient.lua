@@ -50,6 +50,7 @@ local highlights = {}
 local connections = {}
 local highlightEnabled = false
 local flying = false
+local noclipEnabled = false
 local flySpeed = 60
 local aimToggleState = false
 local aiming = false
@@ -988,25 +989,26 @@ table.insert(connections, UIS.JumpRequest:Connect(function()
 end))
 
 ------------------------------------------------------------
--- FLIGHT & NOCLIP
+-- FLIGHT & NOCLIP ENGINE
 ------------------------------------------------------------
 
 local flySection = createSection("Flight Capabilities")
 local flyKeyLabel = createLabel(flySection, "Fly Keybind: [" .. Config.FlyKey.Name .. "]")
 local flyKeyButton = createButton(flySection, "Change Fly Key")
 local flyStatus = createButton(flySection, "Flight System: OFF")
-local noclipEnabled = false
 local noclipButton = createButton(flySection, "Noclip: OFF")
 local flyConnection = nil
 
-local function noclipOn()
-	if not noclipEnabled then return end
-	local char = player.Character
-	if not char then return end
-	for _, part in ipairs(char:GetDescendants()) do
-		if part:IsA("BasePart") then part.CanCollide = false end
+-- Noclip Loop: Runs continuously on Stepped when Noclip is ON
+table.insert(connections, RS.Stepped:Connect(function()
+	if noclipEnabled and not exited and player.Character then
+		for _, part in ipairs(player.Character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = false
+			end
+		end
 	end
-end
+end))
 
 local function noclipOff()
 	local char = player.Character
@@ -1028,11 +1030,13 @@ local function stopFly()
 	local char = player.Character
 	if char then
 		local root = char:FindFirstChild("HumanoidRootPart")
+		local hum = char:FindFirstChildOfClass("Humanoid")
 		if root then
 			for _, obj in ipairs(root:GetChildren()) do
-				if obj:IsA("BodyVelocity") then obj:Destroy() end
+				if obj:IsA("BodyVelocity") or obj:IsA("BodyGyro") then obj:Destroy() end
 			end
 		end
+		if hum then hum.PlatformStand = false end
 	end
 	if not noclipEnabled then noclipOff() end
 end
@@ -1041,31 +1045,40 @@ local function startFly()
 	local char = player.Character
 	if not char then return end
 	local root = char:FindFirstChild("HumanoidRootPart")
-	if not root then return end
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if not root or not hum then return end
 
 	flying = true
 	flyStatus.Text = "Flight System: ON"
 	flyStatus.TextColor3 = Color3.fromRGB(226, 183, 20)
+	hum.PlatformStand = true
 
 	local bv = Instance.new("BodyVelocity")
-	bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+	bv.Name = "FlyVelocity"
+	bv.MaxForce = Vector3.new(1e9, 1e9, 1e9)
 	bv.Velocity = Vector3.zero
 	bv.Parent = root
 
+	local bg = Instance.new("BodyGyro")
+	bg.Name = "FlyGyro"
+	bg.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+	bg.CFrame = root.CFrame
+	bg.Parent = root
+
 	flyConnection = RS.Stepped:Connect(function()
 		if not flying or exited or not root.Parent then stopFly() return end
-		if noclipEnabled then noclipOn() end
 
 		local move = Vector3.zero
 		if UIS:IsKeyDown(Enum.KeyCode.W) then move += camera.CFrame.LookVector end
 		if UIS:IsKeyDown(Enum.KeyCode.S) then move -= camera.CFrame.LookVector end
 		if UIS:IsKeyDown(Enum.KeyCode.A) then move -= camera.CFrame.RightVector end
 		if UIS:IsKeyDown(Enum.KeyCode.D) then move += camera.CFrame.RightVector end
-		if UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
-		if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0, 1, 0) end
+		if UIS:IsKeyDown(Enum.KeyCode.E) or UIS:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0, 1, 0) end
+		if UIS:IsKeyDown(Enum.KeyCode.Q) or UIS:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0, 1, 0) end
 
-		if move.Magnitude > 0 then move = move.Unit end
-		bv.Velocity = move * flySpeed
+		if move.Magnitude > 0 then move = move.Unit * flySpeed end
+		bv.Velocity = move
+		bg.CFrame = camera.CFrame
 	end)
 end
 
@@ -1080,7 +1093,7 @@ noclipButton.MouseButton1Click:Connect(function()
 	noclipEnabled = not noclipEnabled
 	noclipButton.Text = noclipEnabled and "Noclip: ON" or "Noclip: OFF"
 	noclipButton.TextColor3 = noclipEnabled and Color3.fromRGB(226, 183, 20) or Color3.fromRGB(210, 210, 225)
-	if noclipEnabled then noclipOn() else noclipOff() end
+	if not noclipEnabled then noclipOff() end
 end)
 
 flyKeyButton.MouseButton1Click:Connect(function()
