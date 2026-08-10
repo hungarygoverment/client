@@ -14,13 +14,13 @@
 
 ---
 
-## 🌟 Overview
+## Overview
 
 **Premium Liquid Gold** is engineered to combine gold-plated aesthetics with raw execution performance. Designed with zero-frame-drop UI rendering, raycast occlusion checks, dynamic FOV indicators, and clean memory handling, it sets a new benchmark for interface utility.
 
 ---
 
-## ✨ Features
+## Features
 
 ### 🎯 Combat & Precision Aiming
 - **Raycast Visibility Engine:** Filters targets based on obstruction line-of-sight.
@@ -43,7 +43,7 @@
 - **3D Aerial Flight Engine:** Camera-relative directional movement (`WASD` + `Space`/`Shift`).
 - **Noclip Phasing:** Toggle collision bypass while flying.
 
-### ✈️ Enviromental overrides locally
+### ☀️ Enviromental overrides locally
 - **Fullbright:** Overrides ambient light and shadows for maximum clarity.
 - **Fog Eraser:** Instantly wipes atmosphere particles and fog distance limits.
 
