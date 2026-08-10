@@ -54,7 +54,7 @@
 
 ## Quick Start
 
-To execute **Premium Liquid Gold** into your game client, use Xeno executor for the smoothest experience and paste in the string to the executor after attaching:
+To execute **Premium Liquid Gold** into your game client, use Xeno.now executor for the smoothest experience and paste in the string to the executor after attaching:
 
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/laszis/premiumliquidgold/main/client.lua"))()
